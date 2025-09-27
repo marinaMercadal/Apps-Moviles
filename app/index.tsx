@@ -1,10 +1,52 @@
-import { useRef } from "react";
-import { Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import { useRef, useState } from "react";
+import {
+  Animated,
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+
 
 const popularMovies = [
-  { id: "1", title: "Viernes De Locos", poster: require("../assets/images/viernesDeLocos.png") },
-  { id: "2", title: "Homo Argentum", poster: require("../assets/images/homoArgentum.png") },
-  { id: "3", title: "Lilo y Stitch", poster: require("../assets/images/liloYStitch.jpg") },
+  {
+    id: "1",
+    title: "Viernes De Locos",
+    poster: require("../assets/images/viernesDeLocos.png"),
+    descripcion: "Una madre y su hija intercambian cuerpos por un día.",
+    duracion: "97 min",
+    anio: 2003,
+    genero: "Comedia, Fantasía",
+    actores: "Jamie Lee Curtis, Lindsay Lohan",
+    edad: "+13",
+  },
+  {
+    id: "2",
+    title: "Homo Argentum",
+    poster: require("../assets/images/homoArgentum.png"),
+    descripcion: "Una sátira argentina que mezcla humor y reflexión.",
+    duracion: "110 min",
+    anio: 2022,
+    genero: "Comedia, Drama",
+    actores: "Actores argentinos varios",
+    edad: "+16",
+  },
+  {
+    id: "3",
+    title: "Lilo y Stitch",
+    poster: require("../assets/images/liloYStitch.jpg"),
+    descripcion: "Una niña hawaiana adopta a una criatura alienígena fugitiva.",
+    duracion: "85 min",
+    anio: 2002,
+    genero: "Animación, Familiar",
+    actores: "Daveigh Chase, Chris Sanders",
+    edad: "ATP",
+  },
 ];
 
 const reviews = [
@@ -37,7 +79,21 @@ const reviews = [
   },
 ];
 
+type Movie = {
+  id: string;
+  title: string;
+  poster: any;
+  descripcion: string;
+  duracion: string;
+  anio: number;
+  genero: string;
+  actores: string;
+  edad: string;
+};
+
 export default function HomeScreen() {
+  const [peliculaSeleccionada, setPeliculaSeleccionada] = useState<Movie | null>(null);
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Bienvenida */}
@@ -56,9 +112,66 @@ export default function HomeScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <MovieCard poster={item.poster} />}
+          renderItem={({ item }) => (
+            <MovieCard
+              movie={item}
+              onPress={() => setPeliculaSeleccionada(item)}
+            />
+          )}
         />
       </View>
+
+      {/* Modal de detalles */}
+      <Modal
+  visible={!!peliculaSeleccionada}
+  transparent
+  animationType="slide"
+  onRequestClose={() => setPeliculaSeleccionada(null)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      {/*  Botón de cierre en la esquina */}
+     <Pressable
+      style={styles.closeIcon}
+      onPress={() => setPeliculaSeleccionada(null)}
+    >
+      <Ionicons name="close" style= {styles.closeIconIcon} />
+    </Pressable>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {peliculaSeleccionada && (
+          <>
+            <Text style={styles.modalTitle}>
+              {peliculaSeleccionada.title}
+            </Text>
+            <Image
+              source={peliculaSeleccionada.poster}
+              style={styles.modalPoster}
+            />
+            <Text style={styles.modalText}>
+              <Text style={styles.bold}>Año:</Text> {peliculaSeleccionada.anio}
+            </Text>
+            <Text style={styles.modalText}>
+              <Text style={styles.bold}>Duración:</Text> {peliculaSeleccionada.duracion}
+            </Text>
+            <Text style={styles.modalText}>
+              <Text style={styles.bold}>Género:</Text> {peliculaSeleccionada.genero}
+            </Text>
+            <Text style={styles.modalText}>
+              <Text style={styles.bold}>Actores:</Text> {peliculaSeleccionada.actores}
+            </Text>
+            <Text style={styles.modalText}>
+              <Text style={styles.bold}>Edad:</Text> {peliculaSeleccionada.edad}
+            </Text>
+            <Text style={styles.modalText}>
+              {peliculaSeleccionada.descripcion}
+            </Text>
+          </>
+        )}
+      </ScrollView>
+    </View>
+  </View>
+</Modal>
 
       {/* Reviews recientes */}
       <View style={styles.reviewsSection}>
@@ -89,17 +202,15 @@ export default function HomeScreen() {
 }
 
 type MovieCardProps = {
-  poster: number;
+  movie: any;
+  onPress: () => void;
 };
 
-function MovieCard({ poster }: MovieCardProps) {
+function MovieCard({ movie, onPress }: MovieCardProps) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    Animated.spring(scale, {
-      toValue: 1.1,
-      useNativeDriver: true,
-    }).start();
+    Animated.spring(scale, { toValue: 1.1, useNativeDriver: true }).start();
   };
 
   const handlePressOut = () => {
@@ -111,9 +222,13 @@ function MovieCard({ poster }: MovieCardProps) {
   };
 
   return (
-    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={onPress}
+    >
       <Animated.Image
-        source={poster}
+        source={movie.poster}
         style={[styles.moviePoster, { transform: [{ scale }] }]}
       />
     </Pressable>
@@ -167,6 +282,61 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     fontWeight: "bold",
   },
+
+  //  Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    padding: 20,
+    borderRadius: 12,
+    width: "85%",
+    maxHeight: "80%", // scroll si el contenido es muy largo
+  },
+modalPoster: {
+  width: "80%",
+  height: "50%",    
+  aspectRatio: 2 / 3,   // relación de pósters (ancho : alto)
+  borderRadius: 8,
+  alignSelf: "center",
+  marginBottom: 10,
+  resizeMode: "contain", 
+},
+modalTitle: {
+  fontSize: 22,
+  fontWeight: "bold",
+  marginBottom: 12,
+  textAlign: "center",
+  color: "#1B1935",         
+  letterSpacing: 1.2,       //  más espacio entre letras
+  textShadowColor: "rgba(0,0,0,0.25)", //  sombra sutil
+  textShadowOffset: { width: 1, height: 1 },
+  textShadowRadius: 2,
+},
+  modalText: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  bold: {
+    fontWeight: "bold",
+  },
+  closeIcon: {
+  position: "absolute",
+  top: 10,
+  right: 10,
+  zIndex: 1,
+  padding: 6,
+},
+closeIconIcon: {
+  fontSize: 26,
+  color: "#2A273F", // rojo elegante
+},
+
+  // ⭐ Reviews
   reviewsSection: {
     marginVertical: 20,
   },
@@ -212,7 +382,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   stars: {
-    color: "#d20404ff", 
+    color: "#d20404ff",
     fontSize: 14,
     marginBottom: 4,
   },
