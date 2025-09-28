@@ -1,13 +1,14 @@
 import React from "react";
 import {
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { Images } from "../../assets/images";
 
 interface Movie{
   id:string;
@@ -17,29 +18,29 @@ interface Movie{
 
 const moviesData={
   masRecientes:[
-    {id:"1",title:"Weapons",poster:require("../assets/images/weapons.png")},
-    {id:"2",title:"Gatillero",poster:require("../assets/images/Gatillero.png")},
-    {id:"3",title:"Dos Tumbas",poster:require("../assets/images/liloYStitch.jpg")},
+    {id:"1",title:"Weapons",poster:Images.weapons},
+    {id:"2",title:"Gatillero",poster:Images.gatillero},
+    {id:"3",title:"Dos Tumbas",poster:Images.liloYStitch},
   ],
   masBuscadas:[
-    {id:"4",title:"Detrás de sus Ojos",poster:require("../assets/images/viernesDeLocos.png")},
-    {id:"5",title:"Los Sobrevivientes",poster:require("../assets/images/homoArgentum.png")},
-    {id:"6",title:"El Bosque",poster:require("../assets/images/liloYStitch.jpg")},
+    {id:"4",title:"Detrás de sus Ojos",poster:Images.viernesDeLocos},
+    {id:"5",title:"Los Sobrevivientes",poster:Images.homoArgentum},
+    {id:"6",title:"El Bosque",poster:Images.liloYStitch},
   ],
   mejoresReviews:[
-    {id:"7",title:"Incontrolables",poster:require("../assets/images/viernesDeLocos.png")},
-    {id:"8",title:"La Huésped",poster:require("../assets/images/homoArgentum.png")},
-    {id:"9",title:"French Lover",poster:require("../assets/images/liloYStitch.jpg")},
+    {id:"7",title:"Incontrolables",poster:Images.viernesDeLocos},
+    {id:"8",title:"La Huésped",poster:Images.homoArgentum},
+    {id:"9",title:"French Lover",poster:Images.liloYStitch},
   ],
   comedia:[
-    {id:"10",title:"Viernes De Locos",poster:require("../assets/images/viernesDeLocos.png")},
-    {id:"11",title:"Lilo y Stitch",poster:require("../assets/images/liloYStitch.jpg")},
-    {id:"12",title:"Homo Argentum",poster:require("../assets/images/homoArgentum.png")},
+    {id:"10",title:"Viernes De Locos",poster:Images.viernesDeLocos},
+    {id:"11",title:"Lilo y Stitch",poster:Images.liloYStitch},
+    {id:"12",title:"Homo Argentum",poster:Images.homoArgentum},
   ],
   drama:[
-    {id:"13",title:"El Padrino",poster:require("../assets/images/viernesDeLocos.png")},
-    {id:"14",title:"Forrest Gump",poster:require("../assets/images/homoArgentum.png")},
-    {id:"15",title:"Titanic",poster:require("../assets/images/liloYStitch.jpg")},
+    {id:"13",title:"El Padrino",poster:Images.viernesDeLocos},
+    {id:"14",title:"Forrest Gump",poster:Images.homoArgentum},
+    {id:"15",title:"Titanic",poster:Images.liloYStitch},
   ],
 };
 
