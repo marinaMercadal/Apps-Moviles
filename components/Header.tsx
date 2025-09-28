@@ -1,26 +1,36 @@
+import React, { useState } from "react";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import Sidebar from "./Sidebar";
 
 export default function Header() {
-  return (
-    <View style={styles.header}>
-     
-      <TouchableOpacity activeOpacity={0.7} onPress={() => console.log("Abrir menú")}>
-        <View style={styles.hamburger}>
-          <View style={[styles.line, { width: 24 }]} />
-          <View style={[styles.line, { width: 18 }]} />
-          <View style={[styles.line, { width: 12 }]} />
-        </View>
-      </TouchableOpacity>
+  const [sidebarVisible, setSidebarVisible] = useState(false);
 
-      
-      
-      <TouchableOpacity activeOpacity={0.7} onPress={() => console.log("Ir al perfil")}>
-        <Image
-          source={require("../assets/images/profile-placeholder.png")}
-          style={styles.profileImage}
-        />
-      </TouchableOpacity>
-    </View>
+  const toggleSidebar = () => {
+    setSidebarVisible(!sidebarVisible);
+  };
+
+  return (
+    <>
+      <View style={styles.header}>
+        <TouchableOpacity activeOpacity={0.7} onPress={toggleSidebar}>
+          <View style={styles.hamburger}>
+            <View style={[styles.line, { width: 24 }]} />
+            <View style={[styles.line, { width: 18 }]} />
+            <View style={[styles.line, { width: 12 }]} />
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={0.7}>
+          <Image
+            source={require("../assets/images/profile-placeholder.png")}
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
+      </View>
+      <Sidebar 
+        visible={sidebarVisible} 
+        onClose={() => setSidebarVisible(false)} 
+      />
+    </>
   );
 }
 
