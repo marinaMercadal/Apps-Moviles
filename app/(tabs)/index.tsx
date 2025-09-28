@@ -1,10 +1,11 @@
 import { useRef } from "react";
 import { Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Images } from "../../assets/images"; // import del archivo central
 
 const popularMovies = [
-  { id: "1", title: "Viernes De Locos", poster: require("../assets/images/viernesDeLocos.png") },
-  { id: "2", title: "Homo Argentum", poster: require("../assets/images/homoArgentum.png") },
-  { id: "3", title: "Lilo y Stitch", poster: require("../assets/images/liloYStitch.jpg") },
+  { id: "1", title: "Viernes De Locos", poster: Images.viernesDeLocos },
+  { id: "2", title: "Homo Argentum", poster: Images.homoArgentum },
+  { id: "3", title: "Lilo y Stitch", poster: Images.liloYStitch },
 ];
 
 const reviews = [
@@ -12,8 +13,8 @@ const reviews = [
     id: "1",
     userName: "Martina Ruiz",
     movieTitle: "Homo Argentum",
-    userAvatar: require("../assets/images/profile-placeholder.png"),
-    moviePoster: require("../assets/images/homoArgentum.png"),
+    userAvatar: Images.profilePlaceholder,
+    moviePoster: Images.homoArgentum,
     rating: 4,
     comment: "Peliculon, no pare de reirme en toda la pelicula.",
   },
@@ -21,8 +22,8 @@ const reviews = [
     id: "2",
     userName: "Marina Mercadal",
     movieTitle: "Lilo y Stitch",
-    userAvatar: require("../assets/images/profile-placeholder.png"),
-    moviePoster: require("../assets/images/liloYStitch.jpg"),
+    userAvatar: Images.profilePlaceholder,
+    moviePoster: Images.liloYStitch,
     rating: 5,
     comment: "Imperdible, la verdad que me hice reconectar con la pelicula vieja.",
   },
@@ -30,8 +31,8 @@ const reviews = [
     id: "3",
     userName: "Carolina Suarez",
     movieTitle: "Viernes De Locos",
-    userAvatar: require("../assets/images/profile-placeholder.png"),
-    moviePoster: require("../assets/images/viernesDeLocos.png"),
+    userAvatar: Images.profilePlaceholder,
+    moviePoster: Images.viernesDeLocos,
     rating: 4,
     comment: "Muy buena película, ultra recomendable para ver con amigas y familia!",
   },
@@ -40,7 +41,7 @@ const reviews = [
 export default function HomeScreen() {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Bienvenida */}
+
       <View style={styles.welcomeSection}>
         <Text style={styles.welcomeText}>¡Bienvenido a VEOVEO! </Text>
         <Text style={styles.welcomeSubText}>
@@ -48,7 +49,6 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      {/* Películas populares */}
       <View style={styles.popularSection}>
         <Text style={styles.genreTitle}>Películas Populares Este Mes</Text>
         <FlatList
@@ -60,7 +60,6 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* Reviews recientes */}
       <View style={styles.reviewsSection}>
         <Text style={styles.sectionTitle}>Reviews Más Recientes</Text>
         {reviews.map((review) => (
@@ -74,7 +73,6 @@ export default function HomeScreen() {
                 <Text style={styles.reviewByUser}>{review.userName}</Text>
               </Text>
 
-              {/* Estrellas */}
               <StarRating rating={review.rating} />
 
               <Text style={styles.comment}>{review.comment}</Text>
@@ -132,97 +130,23 @@ function StarRating({ rating }: StarRatingProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1B1935",
-    paddingHorizontal: 16,
-  },
-  welcomeSection: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  welcomeText: {
-    color: "#F2A8A8",
-    fontSize: 22,
-    fontWeight: "bold",
-  },
-  welcomeSubText: {
-    color: "#DDD",
-    fontSize: 14,
-    marginTop: 4,
-  },
-  popularSection: {
-    height: 250,
-    marginVertical: 10,
-  },
-  moviePoster: {
-    width: 120,
-    height: 180,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  genreTitle: {
-    color: "#eeececff",
-    fontSize: 18,
-    marginBottom: 6,
-    fontWeight: "bold",
-  },
-  reviewsSection: {
-    marginVertical: 20,
-  },
-  sectionTitle: {
-    color: "#eeececff",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  reviewCard: {
-    flexDirection: "row",
-    backgroundColor: "#2A273F",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-    alignItems: "flex-start",
-  },
-  userAvatarLarge: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 12,
-  },
-  reviewContent: {
-    flex: 1,
-    marginRight: 10,
-  },
-  movieTitleReview: {
-    color: "#FFF",
-    fontWeight: "bold",
-    fontSize: 16,
-    marginBottom: 2,
-  },
-  reviewBy: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  reviewByGray: {
-    color: "#AAA",
-  },
-  reviewByUser: {
-    color: "#F2A8A8",
-    fontWeight: "bold",
-  },
-  stars: {
-    color: "#d20404ff", 
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  comment: {
-    color: "#DDD",
-    fontSize: 14,
-  },
-  moviePosterSmall: {
-    width: 60,
-    height: 80,
-    borderRadius: 6,
-  },
+  container: { flex: 1, backgroundColor: "#1B1935", paddingHorizontal: 16 },
+  welcomeSection: { marginTop: 20, marginBottom: 20 },
+  welcomeText: { color: "#F2A8A8", fontSize: 22, fontWeight: "bold" },
+  welcomeSubText: { color: "#DDD", fontSize: 14, marginTop: 4 },
+  popularSection: { height: 250, marginVertical: 10 },
+  moviePoster: { width: 120, height: 180, borderRadius: 8, marginRight: 12 },
+  genreTitle: { color: "#eeececff", fontSize: 18, marginBottom: 6, fontWeight: "bold" },
+  reviewsSection: { marginVertical: 20 },
+  sectionTitle: { color: "#eeececff", fontSize: 18, fontWeight: "bold", marginBottom: 10 },
+  reviewCard: { flexDirection: "row", backgroundColor: "#2A273F", borderRadius: 10, padding: 12, marginBottom: 12, alignItems: "flex-start" },
+  userAvatarLarge: { width: 60, height: 60, borderRadius: 30, marginRight: 12 },
+  reviewContent: { flex: 1, marginRight: 10 },
+  movieTitleReview: { color: "#FFF", fontWeight: "bold", fontSize: 16, marginBottom: 2 },
+  reviewBy: { fontSize: 12, marginBottom: 4 },
+  reviewByGray: { color: "#AAA" },
+  reviewByUser: { color: "#F2A8A8", fontWeight: "bold" },
+  stars: { color: "#d20404ff", fontSize: 14, marginBottom: 4 },
+  comment: { color: "#DDD", fontSize: 14 },
+  moviePosterSmall: { width: 60, height: 80, borderRadius: 6 },
 });

@@ -1,91 +1,53 @@
-import Header from "@/components/Header";
-import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { Asset } from "expo-asset";
+import { Stack } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { Images } from "../assets/images"; // tu archivo central de imágenes
 
-export default function TabsLayout() {
+export default function RootLayout() {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    async function loadAssets() {
+      try {
+        const imageAssets = Object.values(Images).map(img => Asset.fromModule(img).downloadAsync());
+        await Promise.all(imageAssets);
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setIsReady(true);
+      }
+    }
+
+    loadAssets();
+  }, []);
+
+  if (!isReady) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#F2A8A8" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-     
-      <Header />
-
-      <Tabs
+      <Stack
         screenOptions={{
           headerShown: false,
-          tabBarStyle: { 
-            backgroundColor: "#1A1833",
-            borderTopWidth: 0.6,
-            borderTopColor: "rgba(255,255,255,0.05)",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: -0.5 },
-            shadowOpacity: 0.2,
-            shadowRadius: 3,
-            elevation: 4,
-            paddingTop: 6,    
-            paddingBottom: 15, 
-            height: 80,        
-          },
-          tabBarActiveTintColor: "#F2A8A8", 
-          tabBarInactiveTintColor: "#B0B0B0", 
-          tabBarShowLabel: false,
+          contentStyle: { backgroundColor: "#1B1935" },
         }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "home" : "home-outline"}
-                size={26} 
-                color={color}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="search"
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "search" : "search-outline"}
-                size={26}
-                color={color}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="watchlist"
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "bookmark" : "bookmark-outline"}
-                size={26}
-                color={color}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "person" : "person-outline"}
-                size={26}
-                color={color}
-              />
-            ),
-          }}
-        />
-      </Tabs>
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1B1935",
+  container: { flex: 1, backgroundColor: "#1B1935" },
+  loader: { 
+    flex: 1, 
+    backgroundColor: "#1B1935", 
+    justifyContent: "center", 
+    alignItems: "center" 
   },
 });
