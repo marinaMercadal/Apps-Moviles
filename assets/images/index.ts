@@ -10,5 +10,6 @@ export const Images = {
   hbo: require("./hbo.png"),
   netflix: require("./netflix.png"),
   amazon: require("./amazon.png"),
+  fondo: require("./transparent-film-tape.png"),
  
 };

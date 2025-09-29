@@ -1,4 +1,3 @@
-import Header from "@/components/Header";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { StyleSheet, View } from "react-native";
@@ -7,7 +6,7 @@ export default function TabsLayout() {
   return (
     <View style={styles.container}>
      
-      <Header />
+      
 
       <Tabs
         screenOptions={{
