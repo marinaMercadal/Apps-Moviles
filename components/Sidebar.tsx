@@ -2,15 +2,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, usePathname } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    Image,
-    Modal,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  Image,
+  Modal,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -78,7 +78,7 @@ export default function Sidebar({visible,onClose}:SidebarProps){
     if(id==="home"){
       router.push("/");
     }else if(id==="films"){
-      router.push("/films");
+      router.push("../sidebar/films");
     }
     handleClose();
   };

@@ -6,5 +6,9 @@ export const Images = {
   weapons: require("./weapons.png"),
   profilePlaceholder: require("./profile-placeholder.png"),
   fondoLogin: require("./imagen-fondo-login.jpg"),
+  robpattinson: require("./cast1.jpg"),
+  hbo: require("./hbo.png"),
+  netflix: require("./netflix.png"),
+  amazon: require("./amazon.png"),
  
 };

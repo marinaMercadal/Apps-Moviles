@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useRef } from "react";
 import { Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Images } from "../../assets/images"; // import del archivo central
@@ -41,9 +42,8 @@ const reviews = [
 export default function HomeScreen() {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-
       <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeText}>¡Bienvenido a VEOVEO! </Text>
+        <Text style={styles.welcomeText}>¡Bienvenido a VEOVEO!</Text>
         <Text style={styles.welcomeSubText}>
           Descubrí las películas más populares y donde verlas
         </Text>
@@ -56,7 +56,9 @@ export default function HomeScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <MovieCard poster={item.poster} />}
+          renderItem={({ item }) => (
+            <MovieCard poster={item.poster} id={item.id} title={item.title} />
+          )}
         />
       </View>
 
@@ -88,28 +90,36 @@ export default function HomeScreen() {
 
 type MovieCardProps = {
   poster: number;
+  id: string;
+  title: string;
 };
 
-function MovieCard({ poster }: MovieCardProps) {
+function MovieCard({ poster, id, title }: MovieCardProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const router = useRouter();
+
+const handlePress = () => {
+  router.push({
+    pathname: "/movie/[movieId]",
+    params: { movieId: id },
+  });
+};
+
 
   const handlePressIn = () => {
-    Animated.spring(scale, {
-      toValue: 1.1,
-      useNativeDriver: true,
-    }).start();
+    Animated.spring(scale, { toValue: 1.1, useNativeDriver: true }).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(scale, {
-      toValue: 1,
-      friction: 3,
-      useNativeDriver: true,
-    }).start();
+    Animated.spring(scale, { toValue: 1, friction: 3, useNativeDriver: true }).start();
   };
 
   return (
-    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={handlePress} // aquí llamamos la navegación
+    >
       <Animated.Image
         source={poster}
         style={[styles.moviePoster, { transform: [{ scale }] }]}
