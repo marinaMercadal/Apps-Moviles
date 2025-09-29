@@ -83,6 +83,11 @@ export default function Sidebar({visible,onClose}:SidebarProps){
     handleClose();
   };
 
+  const handleProfilePress = () => {
+    router.push("/profile/profile");
+    handleClose();
+  };
+
   const handleLogout=()=>{
     handleClose();
   };
@@ -105,7 +110,7 @@ export default function Sidebar({visible,onClose}:SidebarProps){
         >
           <SafeAreaView style={styles.container}>
             <View style={styles.profileSection}>
-              <TouchableOpacity style={styles.profileContainer}>
+              <TouchableOpacity style={styles.profileContainer} onPress={handleProfilePress}>
                 <Image
                   source={require("../assets/images/profile-placeholder.png")}
                   style={styles.profileImage}

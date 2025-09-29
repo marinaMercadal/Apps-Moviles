@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import Sidebar from "./Sidebar";
@@ -7,6 +8,10 @@ export default function Header() {
 
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
+  };
+
+  const navigateToProfile=()=>{
+    router.push("/profile/profile");
   };
 
   return (
@@ -19,7 +24,7 @@ export default function Header() {
             <View style={[styles.line, { width: 12 }]} />
           </View>
         </TouchableOpacity>
-        <TouchableOpacity activeOpacity={0.7}>
+        <TouchableOpacity activeOpacity={0.7} onPress={navigateToProfile}>
           <Image
             source={require("../assets/images/profile-placeholder.png")}
             style={styles.profileImage}

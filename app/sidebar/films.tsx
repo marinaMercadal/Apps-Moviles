@@ -29,6 +29,7 @@ const moviesData={
     {id:"6",title:"Gatillero",poster:Images.gatillero},
     {id:"7",title:"Ballerina",poster:Images.ballerina},
     {id:"8",title:"Death of a Unicorn",poster:Images.deathOfUnicorn},
+    {id:"28",title:"Enemies",poster:Images.enemies}
   ],
   masBuscadas:[
     {id:"9",title:"French Lover",poster:Images.frenchLover},

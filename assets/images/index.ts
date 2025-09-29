@@ -15,5 +15,10 @@ export const Images = {
   iKnowWhatYouDidLastSummer: require("./IKnowWhatYouDidLatSummer.png"),
   profilePlaceholder: require("./profile-placeholder.png"),
   fondoLogin: require("./imagen-fondo-login.jpg"),
+  monstruo: require("./Monstruo.png"),
+  batman: require("./batman.png"),
+  vientosOscuros: require("./VientosOscuros.png"),
+  veoveo: require("./veoveo.png"),
+  header: require("./header.png"),
  
 };
