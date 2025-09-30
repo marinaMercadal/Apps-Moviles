@@ -78,13 +78,13 @@ export default function Sidebar({visible,onClose}:SidebarProps){
     if(id==="home"){
       router.push("/");
     }else if(id==="films"){
-      router.push("/sidebar/films");
+      router.push("../sidebar/films");
     }
     handleClose();
   };
 
   const handleProfilePress = () => {
-    router.push("/profile/profile");
+    router.push("../profile/profile");
     handleClose();
   };
 

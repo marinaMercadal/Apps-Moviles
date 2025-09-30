@@ -3,8 +3,10 @@ import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { Images } from "../assets/images"; // tu archivo central de imágenes
+import Header from "../components/Header";
 
 export default function RootLayout() {
+  
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -31,7 +33,9 @@ export default function RootLayout() {
   }
 
   return (
+    
     <View style={styles.container}>
+      <Header/>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -49,5 +53,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1B1935", 
     justifyContent: "center", 
     alignItems: "center" 
+    
   },
+  
 });

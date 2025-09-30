@@ -20,5 +20,10 @@ export const Images = {
   vientosOscuros: require("./VientosOscuros.png"),
   veoveo: require("./veoveo.png"),
   header: require("./header.png"),
+  robpattinson: require("./cast1.jpg"),
+  hbo: require("./hbo.png"),
+  netflix: require("./netflix.png"),
+  amazon: require("./amazon.png"),
+  fondo: require("./transparent-film-tape.png"),
  
 };
