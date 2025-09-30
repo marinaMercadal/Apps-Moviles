@@ -11,7 +11,6 @@ import {
   View,
 } from "react-native";
 import { Images } from "../../assets/images";
-import Header from "../../components/Header";
 
 interface Movie{
   id:string;
@@ -143,7 +142,6 @@ export default function PeliculasScreen(){
 
   return(
     <View style={styles.container}>
-      <Header/>
       <View style={styles.content}>
         <View style={styles.titleContainer}>
           <Text style={styles.screenTitle}>Películas</Text>

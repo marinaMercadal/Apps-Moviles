@@ -18,7 +18,7 @@ import {
 export default function RegisterScreen() {
   const translateY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [isReady, setIsReady] = useState(false); // 👈 controla carga
+  const [isReady, setIsReady] = useState(false); 
   const router = useRouter();
 
   useEffect(() => {
@@ -65,7 +65,6 @@ export default function RegisterScreen() {
       bounces={true}
     >
       {!isReady ? (
-        // Loader mientras carga la imagen
         <View style={styles.loader}>
           <ActivityIndicator size="large" color="#F2A8A8" />
         </View>
@@ -82,19 +81,17 @@ export default function RegisterScreen() {
           source={require("../../assets/images/imagen-fondo-login.jpg")}
           style={styles.headerImage}
           resizeMode="cover"
-          onLoadEnd={() => setIsReady(true)} // 👈 marca como lista
+          onLoadEnd={() => setIsReady(true)} 
         >
           <View style={styles.overlay} />
         </ImageBackground>
 
-        {/* Caja de registro */}
         <Animated.View style={[styles.registerBox, { transform: [{ translateY }] }]}>
           <Text style={styles.title}>Crear Cuenta</Text>
           <Text style={styles.subtitle}>
             Regístrate para comenzar a usar la app
           </Text>
 
-          {/* Inputs */}
           <View style={styles.inputContainer}>
             <Ionicons name="person-outline" size={20} color="#8c8c8c" style={styles.icon} />
             <TextInput placeholder="Username" placeholderTextColor="#8c8c8c" style={styles.input} />
@@ -115,12 +112,10 @@ export default function RegisterScreen() {
             <TextInput placeholder="Confirmar Contraseña" placeholderTextColor="#8c8c8c" secureTextEntry style={styles.input} />
           </View>
 
-          {/* Botón */}
           <TouchableOpacity style={styles.registerButton}>
             <Text style={styles.registerText}>Registrarse</Text>
           </TouchableOpacity>
 
-          {/* Volver */}
           <Text style={styles.login}>
             ¿Ya tienes una cuenta?{" "}
             <Text style={{ color: "#F2A8A8" }} onPress={() => router.push("/login")}>
@@ -142,6 +137,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 25,
+    paddingVertical: 25,
     marginTop: 20,
     marginBottom: 50,
     width: "90%",
@@ -190,8 +186,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "#1B1935",
-    justifyContent: "center", // 👈 centra vertical
-    alignItems: "center",     // 👈 centra horizontal
+    justifyContent: "center",
+    alignItems: "center",     
     zIndex: 10,               
   },
 });
