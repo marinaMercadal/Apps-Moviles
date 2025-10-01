@@ -29,18 +29,7 @@ export default function TabsLayout() {
           tabBarShowLabel: false,
         }}
       >
-        <Tabs.Screen
-          name="index"
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "home" : "home-outline"}
-                size={26} 
-                color={color}
-              />
-            ),
-          }}
-        />
+      
         <Tabs.Screen
           name="search"
           options={{
@@ -54,17 +43,18 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="watchlist"
+          name="index"
           options={{
             tabBarIcon: ({ color, focused }) => (
               <Ionicons
-                name={focused ? "bookmark" : "bookmark-outline"}
-                size={26}
+                name={focused ? "home" : "home-outline"}
+                size={26} 
                 color={color}
               />
             ),
           }}
         />
+        
         <Tabs.Screen
           name="login"
           options={{
