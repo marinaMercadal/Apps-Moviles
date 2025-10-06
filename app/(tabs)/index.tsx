@@ -1,9 +1,11 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useRef } from "react";
 import { Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Images } from "../../assets/images"; // import del archivo central
+import { Images } from "../../assets/images"; // import central de imágenes
+import useFavorites from "../../hooks/useFavorites"; // 👈 import del hook
 
-const popularMovies = [
+const allMovies = [
   { id: "1", title: "Viernes De Locos", poster: Images.viernesDeLocos },
   { id: "2", title: "Homo Argentum", poster: Images.homoArgentum },
   { id: "3", title: "Lilo y Stitch", poster: Images.liloYStitch },
@@ -40,6 +42,8 @@ const reviews = [
 ];
 
 export default function HomeScreen() {
+  const { favorites, toggleFavorite, isFavorite } = useFavorites();
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.welcomeSection}>
@@ -52,12 +56,18 @@ export default function HomeScreen() {
       <View style={styles.popularSection}>
         <Text style={styles.genreTitle}>Películas Populares Este Mes</Text>
         <FlatList
-          data={popularMovies}
+          data={allMovies}
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <MovieCard poster={item.poster} id={item.id} title={item.title} />
+            <MovieCard
+              poster={item.poster}
+              id={item.id}
+              title={item.title}
+              isFav={isFavorite(item.id)}
+              onToggleFav={() => toggleFavorite(item)}
+            />
           )}
         />
       </View>
@@ -92,19 +102,20 @@ type MovieCardProps = {
   poster: number;
   id: string;
   title: string;
+  isFav: boolean;
+  onToggleFav: () => void;
 };
 
-function MovieCard({ poster, id, title }: MovieCardProps) {
+function MovieCard({ poster, id, title, isFav, onToggleFav }: MovieCardProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const router = useRouter();
 
-const handlePress = () => {
-  router.push({
-    pathname: "/movie/[movieId]",
-    params: { movieId: id },
-  });
-};
-
+  const handlePress = () => {
+    router.push({
+      pathname: "/movie/[movieId]",
+      params: { movieId: id },
+    });
+  };
 
   const handlePressIn = () => {
     Animated.spring(scale, { toValue: 1.1, useNativeDriver: true }).start();
@@ -115,27 +126,28 @@ const handlePress = () => {
   };
 
   return (
-    <Pressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      onPress={handlePress} // aquí llamamos la navegación
-    >
-      <Animated.Image
-        source={poster}
-        style={[styles.moviePoster, { transform: [{ scale }] }]}
-      />
-    </Pressable>
+    <View>
+      <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={handlePress}>
+        <Animated.Image
+          source={poster}
+          style={[styles.moviePoster, { transform: [{ scale }] }]}
+        />
+      </Pressable>
+
+      {/* Icono de corazón ❤️ */}
+      <Pressable style={styles.heartIcon} onPress={onToggleFav}>
+        <Ionicons
+          name={isFav ? "heart" : "heart-outline"}
+          size={24}
+          color={isFav ? "#F2A8A8" : "#fff"}
+        />
+      </Pressable>
+    </View>
   );
 }
 
-type StarRatingProps = {
-  rating: number;
-};
-
-function StarRating({ rating }: StarRatingProps) {
-  const stars = Array.from({ length: 5 }, (_, index) =>
-    index < rating ? "★" : "☆"
-  );
+function StarRating({ rating }: { rating: number }) {
+  const stars = Array.from({ length: 5 }, (_, index) => (index < rating ? "★" : "☆"));
   return <Text style={styles.stars}>{stars.join(" ")}</Text>;
 }
 
@@ -149,7 +161,14 @@ const styles = StyleSheet.create({
   genreTitle: { color: "#eeececff", fontSize: 18, marginBottom: 6, fontWeight: "bold" },
   reviewsSection: { marginVertical: 20 },
   sectionTitle: { color: "#eeececff", fontSize: 18, fontWeight: "bold", marginBottom: 10 },
-  reviewCard: { flexDirection: "row", backgroundColor: "#2A273F", borderRadius: 10, padding: 12, marginBottom: 12, alignItems: "flex-start" },
+  reviewCard: {
+    flexDirection: "row",
+    backgroundColor: "#2A273F",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    alignItems: "flex-start",
+  },
   userAvatarLarge: { width: 60, height: 60, borderRadius: 30, marginRight: 12 },
   reviewContent: { flex: 1, marginRight: 10 },
   movieTitleReview: { color: "#FFF", fontWeight: "bold", fontSize: 16, marginBottom: 2 },
@@ -159,4 +178,12 @@ const styles = StyleSheet.create({
   stars: { color: "#d20404ff", fontSize: 14, marginBottom: 4 },
   comment: { color: "#DDD", fontSize: 14 },
   moviePosterSmall: { width: 60, height: 80, borderRadius: 6 },
+  heartIcon: {
+    position: "absolute",
+    top: 8,
+    right: 16,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: 20,
+    padding: 4,
+  },
 });

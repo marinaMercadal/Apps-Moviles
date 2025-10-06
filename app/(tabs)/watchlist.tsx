@@ -1,9 +1,6 @@
-import { Text, View } from "react-native";
+import React from "react";
+import MiLista from "../../components/MiLista";
 
 export default function WatchlistScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Pantalla MiiiLista 📑</Text>
-    </View>
-  );
+  return <MiLista />;
 }
