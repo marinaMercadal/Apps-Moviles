@@ -3,7 +3,6 @@ import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { Images } from "../assets/images";
-import Header from "../components/Header";
 import { AuthProvider } from "../context/AuthContext";
 
 function RootLayoutNav() {
@@ -39,7 +38,7 @@ function RootLayoutContent() {
     return (
       
       <View style={styles.loader}>
-        <Header />
+   
         <ActivityIndicator size="large" color="#F2A8A8" />
       </View>
     );
