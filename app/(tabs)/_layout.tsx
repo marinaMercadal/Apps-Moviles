@@ -9,11 +9,13 @@ export default function TabsLayout() {
   const router = useRouter();
 
   const handleProfilePress = () => {
-    if (user) {
-      router.push("/profile/profile");
-    } else {
-      router.push("/login");
-    }
+    if (user) router.push("/profile/profile");
+    else router.push("/login");
+  };
+
+  const handleFavsPress = () => {
+    if (user) router.push("/favorites");   // ruta a tu pantalla de favoritos
+    else router.push("/login");
   };
 
   return (
@@ -22,7 +24,7 @@ export default function TabsLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: { 
+          tabBarStyle: {
             backgroundColor: "#1A1833",
             borderTopWidth: 0.6,
             borderTopColor: "rgba(255,255,255,0.05)",
@@ -31,25 +33,20 @@ export default function TabsLayout() {
             shadowOpacity: 0.2,
             shadowRadius: 3,
             elevation: 4,
-            paddingTop: 6,    
-            paddingBottom: 15, 
-            height: 80,        
+            paddingTop: 6,
+            paddingBottom: 15,
+            height: 80,
           },
-          tabBarActiveTintColor: "#F2A8A8", 
-          tabBarInactiveTintColor: "#B0B0B0", 
+          tabBarActiveTintColor: "#F2A8A8",
+          tabBarInactiveTintColor: "#B0B0B0",
           tabBarShowLabel: false,
         }}
       >
-      
         <Tabs.Screen
           name="search"
           options={{
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "search" : "search-outline"}
-                size={26}
-                color={color}
-              />
+              <Ionicons name={focused ? "search" : "search-outline"} size={26} color={color} />
             ),
           }}
         />
@@ -57,24 +54,32 @@ export default function TabsLayout() {
           name="index"
           options={{
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "home" : "home-outline"}
-                size={26} 
-                color={color}
-              />
+              <Ionicons name={focused ? "home" : "home-outline"} size={26} color={color} />
             ),
           }}
         />
+
         
+        <Tabs.Screen
+          name="favorites" 
+          options={{
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "heart" : "heart-outline"} size={26} color={color} />
+            ),
+          }}
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              handleFavsPress();
+            },
+          }}
+        />
+
         <Tabs.Screen
           name="login"
           options={{
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "person-circle" : "person-circle-outline"}
-                size={26}
-                color={color}
-              />
+              <Ionicons name={focused ? "person-circle" : "person-circle-outline"} size={26} color={color} />
             ),
           }}
           listeners={{
@@ -90,8 +95,5 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1B1935",
-  },
+  container: { flex: 1, backgroundColor: "#1B1935" },
 });

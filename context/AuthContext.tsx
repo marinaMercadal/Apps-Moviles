@@ -19,8 +19,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = 'http://192.168.0.187:3000/api';
+const API_URL = 'http://192.168.1.33:3000/api';
 //caro:http://192.168.68.56:3000/api
+// maru: 'http://192.168.0.187:3000/api'
+// martu: http://192.168.1.33:3000/api
 
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
