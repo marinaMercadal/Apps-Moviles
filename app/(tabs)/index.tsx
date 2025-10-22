@@ -1,13 +1,11 @@
 import { useRouter } from "expo-router";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Images } from "../../assets/images"; // import del archivo central
+import { Images } from "../../assets/images"; // tus imágenes locales
 
-const popularMovies = [
-  { id: "1", title: "Viernes De Locos", poster: Images.viernesDeLocos },
-  { id: "2", title: "Homo Argentum", poster: Images.homoArgentum },
-  { id: "3", title: "Lilo y Stitch", poster: Images.liloYStitch },
-];
+const API_KEY = "fc59c56c3c4eee0a42ffda0c5cbcc701";
+const BASE_URL = "https://api.themoviedb.org/3";
+const IMG_URL = "https://image.tmdb.org/t/p/w500";
 
 const reviews = [
   {
@@ -26,7 +24,7 @@ const reviews = [
     userAvatar: Images.profilePlaceholder,
     moviePoster: Images.liloYStitch,
     rating: 5,
-    comment: "Imperdible, la verdad que me hice reconectar con la pelicula vieja.",
+    comment: "Imperdible, la verdad que me hizo reconectar con la película vieja.",
   },
   {
     id: "3",
@@ -40,12 +38,28 @@ const reviews = [
 ];
 
 export default function HomeScreen() {
+  const [popularMovies, setPopularMovies] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchPopularMovies();
+  }, []);
+
+  const fetchPopularMovies = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=es-ES&page=1`);
+      const data = await res.json();
+      setPopularMovies(data.results || []);
+    } catch (error) {
+      console.error("Error fetching popular movies:", error);
+    }
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.welcomeSection}>
         <Text style={styles.welcomeText}>¡Bienvenido a VEOVEO!</Text>
         <Text style={styles.welcomeSubText}>
-          Descubrí las películas más populares y donde verlas
+          Descubrí las películas más populares y dónde verlas
         </Text>
       </View>
 
@@ -55,9 +69,13 @@ export default function HomeScreen() {
           data={popularMovies}
           horizontal
           showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <MovieCard poster={item.poster} id={item.id} title={item.title} />
+            <MovieCard
+              poster={{ uri: IMG_URL + item.poster_path }}
+              id={item.id.toString()}
+              title={item.title}
+            />
           )}
         />
       </View>
@@ -89,7 +107,7 @@ export default function HomeScreen() {
 }
 
 type MovieCardProps = {
-  poster: number;
+  poster: any;
   id: string;
   title: string;
 };
@@ -98,13 +116,12 @@ function MovieCard({ poster, id, title }: MovieCardProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const router = useRouter();
 
-const handlePress = () => {
-  router.push({
-    pathname: "/movie/[movieId]",
-    params: { movieId: id },
-  });
-};
-
+  const handlePress = () => {
+    router.push({
+      pathname: "/movie/[movieId]",
+      params: { movieId: id },
+    });
+  };
 
   const handlePressIn = () => {
     Animated.spring(scale, { toValue: 1.1, useNativeDriver: true }).start();
@@ -118,7 +135,7 @@ const handlePress = () => {
     <Pressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      onPress={handlePress} // aquí llamamos la navegación
+      onPress={handlePress}
     >
       <Animated.Image
         source={poster}
@@ -149,7 +166,14 @@ const styles = StyleSheet.create({
   genreTitle: { color: "#eeececff", fontSize: 18, marginBottom: 6, fontWeight: "bold" },
   reviewsSection: { marginVertical: 20 },
   sectionTitle: { color: "#eeececff", fontSize: 18, fontWeight: "bold", marginBottom: 10 },
-  reviewCard: { flexDirection: "row", backgroundColor: "#2A273F", borderRadius: 10, padding: 12, marginBottom: 12, alignItems: "flex-start" },
+  reviewCard: {
+    flexDirection: "row",
+    backgroundColor: "#2A273F",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    alignItems: "flex-start",
+  },
   userAvatarLarge: { width: 60, height: 60, borderRadius: 30, marginRight: 12 },
   reviewContent: { flex: 1, marginRight: 10 },
   movieTitleReview: { color: "#FFF", fontWeight: "bold", fontSize: 16, marginBottom: 2 },
