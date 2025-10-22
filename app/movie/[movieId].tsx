@@ -95,7 +95,6 @@ export default function MovieDetails() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Fila superior: Poster + Info */}
       <View style={styles.topRow}>
         <Image source={movie.poster} style={styles.posterLarge} />
         <View style={styles.headerInfo}>
@@ -103,7 +102,6 @@ export default function MovieDetails() {
           <Text style={styles.year}>{movie.year}</Text>
           <Text style={styles.summary}>{movie.summary}</Text>
 
-          {/* Dónde ver */}
           <View style={styles.whereToWatchRow}>
             <Text style={styles.whereToWatchLabel}>Dónde ver:</Text>
             <View style={styles.iconRow}>
@@ -115,15 +113,12 @@ export default function MovieDetails() {
         </View>
       </View>
 
-      {/* Fila inferior: Trailer + Rating */}
       <View style={styles.trailerRow}>
         <TouchableOpacity onPress={openTrailer} style={styles.trailerWrapper}>
           <Image source={{ uri: trailerThumbnail }} style={styles.trailerLarge} />
           
-          {/* Overlay oscuro */}
           <View style={styles.trailerOverlay} />
 
-          {/* Icono de Play */}
           <Ionicons
             name="play-circle"
             size={60}
@@ -144,7 +139,6 @@ export default function MovieDetails() {
 
       <View style={styles.divider} />
 
-      {/* Cast */}
       <Text style={styles.sectionTitle}>Elenco</Text>
       <View style={styles.castCircleRow}>
         {cast.map((actor, idx) => (
@@ -156,7 +150,6 @@ export default function MovieDetails() {
 
       <View style={styles.divider} />
 
-      {/* Reviews */}
       <Text style={styles.sectionTitle}>Reseñas</Text>
       <View style={styles.reviewsSection}>
         {movie.reviews.map((review, idx) => (
@@ -181,7 +174,6 @@ export default function MovieDetails() {
 const styles = StyleSheet.create({
   container: { flexGrow: 1, alignItems: "center", backgroundColor: "#1B1935", padding: 20 },
 
-  // Fila superior
   topRow: { flexDirection: "row", width: "100%", marginBottom: 16, gap: 12 },
   posterLarge: { width: 120, height: 180, borderRadius: 12 },
   headerInfo: { flex: 1 },
@@ -189,7 +181,6 @@ const styles = StyleSheet.create({
   year: { color: "#FFF", fontSize: 15, fontWeight: "400", marginBottom: 6 },
   summary: { color: "#CCC", fontSize: 13, lineHeight: 17, marginBottom: 8 },
 
-  // Fila inferior
   trailerRow: { flexDirection: "row", width: "100%", gap: 12, marginBottom: 16 },
   trailerWrapper: { position: "relative" },
   trailerLarge: { width: 220, height: 140, borderRadius: 12 },
@@ -217,7 +208,6 @@ const styles = StyleSheet.create({
   ratingBarFilled: { backgroundColor: "#d20404ff" },
   ratingBarEmpty: { backgroundColor: "#949191ff" },
 
-  // Dónde ver
   whereToWatchRow: { flexDirection: "row", alignItems: "center", marginTop: 4, marginBottom: 8, gap: 8 },
   whereToWatchLabel: { color: "#FFF", fontSize: 13, fontWeight: "bold" },
   iconRow: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -225,12 +215,10 @@ const styles = StyleSheet.create({
 
   divider: { width: "100%", height: 1, backgroundColor: "#18162c", opacity: 0.7, marginVertical: 8 },
 
-  // Cast
   castCircleRow: { flexDirection: "row", alignItems: "center", marginBottom: 16, gap: 16, width: "100%" },
   castCircle: { width: 54, height: 54, borderRadius: 27, alignItems: "center", justifyContent: "center", borderWidth: 2 },
   castCirclePhoto: { width: 48, height: 48, borderRadius: 24 },
 
-  // Reviews
   reviewsSection: { marginVertical: 20, width: "100%" },
   sectionTitle: { color: "#eeececff", fontSize: 18, fontWeight: "bold", marginBottom: 10, textAlign: "center" },
   reviewCard: { flexDirection: "row", backgroundColor: "#2A273F", borderRadius: 10, padding: 12, marginBottom: 12 },

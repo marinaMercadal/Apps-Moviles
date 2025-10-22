@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
   Image,
@@ -10,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Images } from '../../assets/images';
+import { useAuth } from '../../context/AuthContext';
 
 interface Movie{
   id:string;
@@ -20,6 +22,29 @@ interface Movie{
 }
 
 const ProfileScreen=()=>{
+  const { user } = useAuth();
+  const router = useRouter();
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loginPrompt}>
+          <Ionicons name="person-circle-outline" size={100} color="#F2A8A8" />
+          <Text style={styles.loginTitle}>Perfil</Text>
+          <Text style={styles.loginSubtitle}>
+            Inicia sesión para ver y editar tu perfil
+          </Text>
+          <TouchableOpacity 
+            style={styles.loginButton}
+            onPress={() => router.push("/login")}
+          >
+            <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  
   const favoriteFilms:Movie[]=[
     {
       id:'1',
@@ -151,15 +176,15 @@ const ProfileScreen=()=>{
             />
             
             <View style={styles.nameContainer}>
-              <Text style={styles.nameText}>Juan</Text>
+              <Text style={styles.nameText}>{user?.name || 'Usuario'}</Text>
               <View style={styles.proBadge}>
                 <Text style={styles.proText}>PRO</Text>
               </View>
             </View>
             
             <View style={styles.followContainer}>
-              <Text style={styles.followText}>50 Seguidores</Text>
-              <Text style={styles.followText}>20 Siguiendo</Text>
+              <Text style={styles.followText}>0 Seguidores</Text>
+              <Text style={styles.followText}>0 Siguiendo</Text>
             </View>
           </View>
         </View>
@@ -184,13 +209,13 @@ const ProfileScreen=()=>{
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Películas Favoritas de Juan</Text>
+          <Text style={styles.sectionTitle}>Películas Favoritas de {user?.name || 'Usuario'}</Text>
           {renderMovieGrid(favoriteFilms)}
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Vistas Recientemente por Juan</Text>
+            <Text style={styles.sectionTitle}>Vistas Recientemente por {user?.name || 'Usuario'}</Text>
             <TouchableOpacity>
               <Text style={styles.seeAllText}>Ver Todo</Text>
             </TouchableOpacity>
@@ -200,7 +225,7 @@ const ProfileScreen=()=>{
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Reseñas Recientes de Juan</Text>
+            <Text style={styles.sectionTitle}>Reseñas Recientes de {user?.name || 'Usuario'}</Text>
             <TouchableOpacity>
               <Text style={styles.seeAllText}>Ver Todo</Text>
             </TouchableOpacity>
@@ -213,7 +238,7 @@ const ProfileScreen=()=>{
                 <Text style={styles.reviewerName}>Weapons</Text>
                 <Text style={styles.reviewYear}>2025</Text>
               </View>
-              <Text style={styles.reviewBy}>Reseña por Juan</Text>
+              <Text style={styles.reviewBy}>Reseña por {user?.name || 'Usuario'}</Text>
               <View style={styles.reviewStars}>
                 {renderStars(4)}
                 <Text style={styles.likeCount}>🗨 0</Text>
@@ -413,6 +438,36 @@ const styles=StyleSheet.create({
     width:60,
     height:80,
     borderRadius:6,
+  },
+  loginPrompt: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  loginTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  loginSubtitle: {
+    fontSize: 16,
+    color: '#aaa',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  loginButton: {
+    backgroundColor: '#F2A8A8',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+  },
+  loginButtonText: {
+    color: '#1B1935',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

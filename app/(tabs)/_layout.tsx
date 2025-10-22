@@ -1,13 +1,24 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
+import Header from "../../components/Header";
+import { useAuth } from "../../context/AuthContext";
 
 export default function TabsLayout() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const handleProfilePress = () => {
+    if (user) {
+      router.push("/profile/profile");
+    } else {
+      router.push("/login");
+    }
+  };
+
   return (
     <View style={styles.container}>
-     
-      
-
+      <Header />
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -60,11 +71,17 @@ export default function TabsLayout() {
           options={{
             tabBarIcon: ({ color, focused }) => (
               <Ionicons
-                name={focused ? "person" : "person-outline"}
+                name={focused ? "person-circle" : "person-circle-outline"}
                 size={26}
                 color={color}
               />
             ),
+          }}
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              handleProfilePress();
+            },
           }}
         />
       </Tabs>

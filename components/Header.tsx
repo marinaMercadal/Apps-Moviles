@@ -1,16 +1,40 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useAuth } from "../context/AuthContext";
 import Sidebar from "./Sidebar";
 
 export default function Header() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const { user } = useAuth();
 
   const toggleSidebar = () => {
+    if (!user) {
+      Alert.alert(
+        "Iniciar Sesión",
+        "Debes iniciar sesión para acceder al menú",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Iniciar Sesión", onPress: () => router.push("/login") }
+        ]
+      );
+      return;
+    }
     setSidebarVisible(!sidebarVisible);
   };
 
-  const navigateToProfile=()=>{
+  const navigateToProfile = () => {
+    if (!user) {
+      Alert.alert(
+        "Iniciar Sesión",
+        "Debes iniciar sesión para ver tu perfil",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Iniciar Sesión", onPress: () => router.push("/login") }
+        ]
+      );
+      return;
+    }
     router.push("/profile/profile");
   };
 
