@@ -2,16 +2,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, usePathname } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Dimensions,
-  Image,
-  Modal,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Dimensions,
+    Image,
+    Modal,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
+import { useAuth } from "../context/AuthContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = 280;
@@ -25,6 +26,7 @@ export default function Sidebar({visible,onClose}:SidebarProps){
   const slideAnim=useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
   const [modalVisible,setModalVisible]=useState(false);
   const pathname=usePathname();
+  const { logout, user } = useAuth();
 
   useEffect(()=>{
     if(visible){
@@ -88,7 +90,8 @@ export default function Sidebar({visible,onClose}:SidebarProps){
     handleClose();
   };
 
-  const handleLogout=()=>{
+  const handleLogout = async () => {
+    await logout();
     handleClose();
   };
 
@@ -116,16 +119,16 @@ export default function Sidebar({visible,onClose}:SidebarProps){
                   style={styles.profileImage}
                 />
                 <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>Juan</Text>
-                  <Text style={styles.profileHandle}>@GameOfJuans</Text>
+                  <Text style={styles.profileName}>{user?.name || "Usuario"}</Text>
+                  <Text style={styles.profileHandle}>@{user?.username || "usuario"}</Text>
                 </View>
               </TouchableOpacity>
               <View style={styles.statsContainer}>
                 <TouchableOpacity style={styles.statButton}>
-                  <Text style={styles.statText}>20 Seguidores</Text>
+                  <Text style={styles.statText}>0 Seguidores</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.statButton}>
-                  <Text style={styles.statText}>50 Siguiendo</Text>
+                  <Text style={styles.statText}>0 Siguiendo</Text>
                 </TouchableOpacity>
               </View>
             </View>

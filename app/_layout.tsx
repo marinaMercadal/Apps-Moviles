@@ -2,11 +2,21 @@ import { Asset } from "expo-asset";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { Images } from "../assets/images"; // tu archivo central de imágenes
-import Header from "../components/Header";
+import { Images } from "../assets/images";
+import { AuthProvider } from "../context/AuthContext";
 
-export default function RootLayout() {
-  
+function RootLayoutNav() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: "#1B1935" },
+      }}
+    />
+  );
+}
+
+function RootLayoutContent() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -33,16 +43,17 @@ export default function RootLayout() {
   }
 
   return (
-    
     <View style={styles.container}>
-      <Header/>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: "#1B1935" },
-        }}
-      />
+      <RootLayoutNav />
     </View>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutContent />
+    </AuthProvider>
   );
 }
 

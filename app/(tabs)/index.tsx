@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useRef } from "react";
 import { Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Images } from "../../assets/images"; // import del archivo central
+import { Images } from "../../assets/images";
 
 const popularMovies = [
   { id: "1", title: "Viernes De Locos", poster: Images.viernesDeLocos },
@@ -118,7 +118,7 @@ const handlePress = () => {
     <Pressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      onPress={handlePress} // aquí llamamos la navegación
+      onPress={handlePress}
     >
       <Animated.Image
         source={poster}

@@ -3,21 +3,21 @@ import { useRouter } from "expo-router";
 
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  Animated,
-  Easing,
-  ImageBackground,
-  Keyboard,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Animated,
+    Easing,
+    ImageBackground,
+    Keyboard,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 
-import { Images } from "../../assets/images";
-import { useAuth } from "../../context/AuthContext";
+import { Images } from "../assets/images";
+import { useAuth } from "../context/AuthContext";
 
 export default function LoginScreen() {
   const translateY = useRef(new Animated.Value(0)).current;
