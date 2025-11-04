@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, usePathname } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -17,6 +17,12 @@ import { useAuth } from "../context/AuthContext";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SIDEBAR_WIDTH = 280;
 
+// Usa el mismo origin que en Settings
+const API_ORIGIN = "http://192.168.1.40:3000";
+
+// Helper para armar URL absoluta
+const full = (url?: string | null) =>
+  url ? (url.startsWith("http") ? url : `${API_ORIGIN}${url}`) : undefined;
 
 export interface SidebarProps {
   visible: boolean;
@@ -28,6 +34,12 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const pathname = usePathname();
   const { logout, user } = useAuth();
+
+  // URI del avatar actual (prioriza profileImage.url; fallback a avatarUrl)
+  const avatarUri = useMemo(
+    () => full(user?.profileImage?.url ?? user?.avatarUrl ?? null),
+    [user?.profileImage?.url, user?.avatarUrl]
+  );
 
   useEffect(() => {
     if (visible) {
@@ -50,13 +62,13 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
 
   const handleClose = () => onClose();
 
-  
   const getActiveRoute = () => {
     if (pathname === "/") return "home";
     if (pathname === "/search") return "search";
     if (pathname === "/profile/profile") return "profile";
     if (pathname === "/favorites/favorites") return "likes";
     if (pathname === "/watchlist") return "watchlist";
+    if (pathname === "/settings") return "settings";
     return "";
   };
 
@@ -71,9 +83,9 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
   const handleItemPress = (id: string) => {
     if (id === "home") router.push("/");
     else if (id === "films") router.push("/sidebar/films");
-    //else if (id === "watchlist") router.push("/watchlist");
+    // else if (id === "watchlist") router.push("/watchlist");
     else if (id === "likes") router.push("../favorites");
-    //else if (id === "settings") router.push("/settings");
+    else if (id === "settings") router.push("../settings");
     handleClose();
   };
 
@@ -111,8 +123,17 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
                 onPress={handleProfilePress}
               >
                 <Image
-                  source={require("../assets/images/profile-placeholder.png")}
-                  style={styles.profileImage}
+                  source={
+                    avatarUri
+                      ? { uri: avatarUri }
+                      : require("../assets/images/profile-placeholder.png")
+                  }
+                  style={[
+                    styles.profileImage,
+                    avatarUri
+                      ? { borderWidth: 2, borderColor: "#F2A8A8" }
+                      : null,
+                  ]}
                 />
                 <View style={styles.profileInfo}>
                   <Text style={styles.profileName}>
@@ -140,10 +161,7 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
                 return (
                   <TouchableOpacity
                     key={item.id}
-                    style={[
-                      styles.menuItem,
-                      active && styles.activeMenuItem,
-                    ]}
+                    style={[styles.menuItem, active && styles.activeMenuItem]}
                     onPress={() => handleItemPress(item.id)}
                   >
                     <Ionicons
@@ -228,6 +246,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     marginRight: 15,
+    backgroundColor: "#3a3850",
   },
   profileInfo: {
     flex: 1,

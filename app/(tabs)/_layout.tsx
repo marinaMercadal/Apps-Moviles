@@ -1,13 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Image, StyleSheet, View } from "react-native";
 import { useAuth } from "../../context/AuthContext";
+
+const API_ORIGIN = "http://192.168.1.40:3000"; // <- mismo origin que usa tu Settings
 
 export default function TabsLayout() {
   const { user } = useAuth();
   const router = useRouter();
   const [showTabs, setShowTabs] = useState(false);
+
+  // Helper para armar URL absoluta
+  const full = (url?: string | null) =>
+    url ? (url.startsWith("http") ? url : `${API_ORIGIN}${url}`) : undefined;
+
+  // URI actual del avatar (usa profileImage.url o, de fallback, avatarUrl)
+  const avatarUri = useMemo(
+    () => full(user?.profileImage?.url ?? user?.avatarUrl ?? null),
+    [user?.profileImage?.url, user?.avatarUrl]
+  );
 
   useEffect(() => {
     setShowTabs(false);
@@ -20,13 +32,15 @@ export default function TabsLayout() {
     else router.push("/login");
   };
 
+  // Cambiamos la key si cambia el avatar para forzar re-render del TabBar
+  const tabsKey = `${user ? "logged" : "guest"}-${user?.profileImageId || user?.avatarUrl || "na"}`;
+
   if (!showTabs) return null;
 
   return (
     <View style={styles.container}>
-      
       <Tabs
-        key={user ? "logged" : "guest"} 
+        key={tabsKey}
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
@@ -52,11 +66,7 @@ export default function TabsLayout() {
           name="search"
           options={{
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "search" : "search-outline"}
-                size={26}
-                color={color}
-              />
+              <Ionicons name={focused ? "search" : "search-outline"} size={26} color={color} />
             ),
           }}
         />
@@ -66,11 +76,7 @@ export default function TabsLayout() {
           name="index"
           options={{
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "home" : "home-outline"}
-                size={26}
-                color={color}
-              />
+              <Ionicons name={focused ? "home" : "home-outline"} size={26} color={color} />
             ),
           }}
         />
@@ -81,27 +87,35 @@ export default function TabsLayout() {
             name="favorites"
             options={{
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons
-                  name={focused ? "heart" : "heart-outline"}
-                  size={26}
-                  color={color}
-                />
+                <Ionicons name={focused ? "heart" : "heart-outline"} size={26} color={color} />
               ),
             }}
           />
         )}
 
-        {/* 👤 Profile/Login */}
+        {/* 👤 Profile/Login -- si hay avatar, mostrar imagen redonda */}
         <Tabs.Screen
           name="login"
           options={{
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "person-circle" : "person-circle-outline"}
-                size={26}
-                color={color}
-              />
-            ),
+            tabBarIcon: ({ color, focused }) =>
+              user && avatarUri ? (
+                <Image
+                  source={{ uri: avatarUri }}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 15,
+                    borderWidth: focused ? 2 : 1,
+                    borderColor: focused ? "#F2A8A8" : "#555",
+                  }}
+                />
+              ) : (
+                <Ionicons
+                  name={focused ? "person-circle" : "person-circle-outline"}
+                  size={28}
+                  color={color}
+                />
+              ),
           }}
           listeners={{
             tabPress: (e) => {
