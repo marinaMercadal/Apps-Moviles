@@ -3,18 +3,23 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
+  Keyboard,
   Linking,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { Images } from "../../assets/images";
+import { useAuth } from "../../context/AuthContext";
 
 const BASE_URL = "http://192.168.0.187:3000/api/movies";
+const REVIEWS_BASE_URL = "http://192.168.0.187:3000/api/reviews";
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 
 function StarRating({ rating }: { rating: number }) {
@@ -28,6 +33,7 @@ function RatingBars({ value }: { value: number }) {
     filled: i < Math.round(value),
     height: heights[i],
   }));
+
   return (
     <View style={styles.ratingBarsContainer}>
       {bars.map((bar, idx) => (
@@ -44,9 +50,24 @@ function RatingBars({ value }: { value: number }) {
   );
 }
 
+function StarSelector({ rating, onRatingChange }: { rating: number; onRatingChange: (r: number) => void }) {
+  return (
+    <View style={styles.starSelector}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <TouchableOpacity key={star} onPress={() => onRatingChange(star)}>
+          <Text style={[styles.selectableStar, { color: star <= rating ? "#d20404" : "#666" }]}>
+            {"★"}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
 export default function MovieDetails() {
   const { movieId } = useLocalSearchParams<{ movieId: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const [movie, setMovie] = useState<any>(null);
   const [cast, setCast] = useState<any[]>([]);
   const [similar, setSimilar] = useState<any[]>([]);
@@ -55,35 +76,40 @@ export default function MovieDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const reviews = [
-    {
-      userName: "Martina Ruiz",
-      rating: 4,
-      comment: "Peliculón, no paré de reírme en toda la película.",
-    },
-    {
-      userName: "Carolina Suarez",
-      rating: 4,
-      comment: "Muy buena película, ultra recomendable para ver con amigas y familia!",
-    },
-    {
-      userName: "Marina Mercadal",
-      rating: 5,
-      comment: "Imperdible, la verdad que me hizo reconectar con la película vieja.",
-    },
-  ];
+  // Estado para reseñas
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [userRating, setUserRating] = useState(0);
+  const [userComment, setUserComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  // Cargar userId de AsyncStorage
+
 
   useEffect(() => {
     if (movieId) {
       fetchMovieData(movieId);
+      fetchReviews(movieId);
     }
   }, [movieId]);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardVisible(true);
+    });
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardVisible(false);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const fetchMovieData = async (id: string) => {
     try {
       setLoading(true);
       setError(null);
-
       console.log(`Fetching data for movie ${id}...`);
 
       const [detailsRes, castRes, similarRes, providersRes, videosRes] = await Promise.all([
@@ -94,7 +120,6 @@ export default function MovieDetails() {
         fetch(`${BASE_URL}/${id}/videos`),
       ]);
 
-      // Verificar que todas las respuestas sean OK
       if (!detailsRes.ok) throw new Error(`Details: ${detailsRes.status}`);
       if (!castRes.ok) throw new Error(`Cast: ${castRes.status}`);
       if (!similarRes.ok) throw new Error(`Similar: ${similarRes.status}`);
@@ -113,11 +138,9 @@ export default function MovieDetails() {
       setCast(castData.cast?.slice(0, 5) || []);
       setSimilar(similarData.results?.slice(0, 10) || []);
 
-      // Streaming providers (solo flatrate)
       const flatrateProviders = providersData.results?.AR?.flatrate || [];
       setProviders(flatrateProviders);
 
-      // Trailer oficial
       const trailer = videosData.results?.find(
         (v: any) => v.type === "Trailer" && v.site === "YouTube"
       );
@@ -129,6 +152,73 @@ export default function MovieDetails() {
       console.error("❌ Error fetching movie data:", errorMessage);
       setError(errorMessage);
       setLoading(false);
+    }
+  };
+
+  const fetchReviews = async (id: string) => {
+    try {
+      const res = await fetch(`${REVIEWS_BASE_URL}/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReviews(data);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching reviews:", error);
+    }
+  };
+
+      const submitReview = async () => {
+    if (!user) {
+      Alert.alert("Error", "Debes estar logueado para escribir una reseña");
+      return;
+    }
+
+    if (userRating === 0) {
+      Alert.alert("Error", "Selecciona una calificación");
+      return;
+    }
+
+    if (userComment.trim().length === 0) {
+      Alert.alert("Error", "Escribe un comentario");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      console.log("📤 Enviando reseña:", {
+        movieId: Number(movieId),
+        userId: user.id,
+        rating: userRating,
+        comment: userComment,
+      });
+
+      const res = await fetch(`${REVIEWS_BASE_URL}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          movieId: Number(movieId),
+          userId: user.id,
+          rating: userRating,
+          comment: userComment,
+        }),
+      });
+
+      const responseData = await res.json();
+      console.log("📩 Respuesta del servidor:", { ok: res.ok, status: res.status, data: responseData });
+
+      if (res.ok) {
+        Alert.alert("Éxito", "Tu reseña se guardó correctamente");
+        setUserRating(0);
+        setUserComment("");
+        fetchReviews(movieId!);
+      } else {
+        Alert.alert("Error", responseData.error || "No se pudo guardar la reseña");
+      }
+    } catch (error) {
+      console.error("❌ Error enviando reseña:", error);
+      Alert.alert("Error", "Ocurrió un error al guardar la reseña");
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -162,7 +252,7 @@ export default function MovieDetails() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <View style={styles.topRow}>
         <Image source={{ uri: IMG_URL + movie.poster_path }} style={styles.posterLarge} />
         <View style={styles.headerInfo}>
@@ -170,7 +260,6 @@ export default function MovieDetails() {
           <Text style={styles.year}>{movie.release_date?.slice(0, 4)}</Text>
           <Text style={styles.summary}>{movie.overview || "Sin descripción disponible."}</Text>
 
-          {/* Streaming providers */}
           {providers.length > 0 && (
             <View style={styles.whereToWatchRow}>
               <Text style={styles.whereToWatchLabel}>Dónde ver:</Text>
@@ -194,7 +283,6 @@ export default function MovieDetails() {
         </View>
       </View>
 
-      {/* Trailer + Rating */}
       <View style={styles.trailerRow}>
         <TouchableOpacity onPress={openTrailer} style={styles.trailerWrapper}>
           <Image source={{ uri: IMG_URL + movie.poster_path }} style={styles.trailerLarge} />
@@ -213,7 +301,6 @@ export default function MovieDetails() {
 
       <View style={styles.divider} />
 
-      {/* Elenco */}
       <Text style={styles.sectionTitle}>Elenco</Text>
       <View style={styles.castCircleRow}>
         {cast
@@ -230,7 +317,6 @@ export default function MovieDetails() {
 
       <View style={styles.divider} />
 
-      {/* Películas similares */}
       <Text style={styles.sectionTitle}>Películas similares</Text>
       <FlatList
         horizontal
@@ -263,23 +349,78 @@ export default function MovieDetails() {
 
       <View style={styles.divider} />
 
-      {/* Reviews */}
       <Text style={styles.sectionTitle}>Reseñas</Text>
+
+      {/* Formulario para agregar reseña propia */}
+      {user && (
+        <View style={[styles.addReviewContainer, keyboardVisible && styles.addReviewContainerShift]}>
+          <Text style={styles.addReviewTitle}>Tu reseña</Text>
+          
+          <StarSelector rating={userRating} onRatingChange={setUserRating} />
+
+          <TextInput
+            style={styles.commentInput}
+            placeholder="Escribe tu comentario..."
+            placeholderTextColor="#666"
+            value={userComment}
+            onChangeText={setUserComment}
+            multiline
+            maxLength={500}
+          />
+
+          <Text style={styles.charCount}>
+            {userComment.length}/500
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.submitButton, submittingReview && styles.submitButtonDisabled]}
+            onPress={submitReview}
+            disabled={submittingReview}
+          >
+            {submittingReview ? (
+              <ActivityIndicator size="small" color="#1B1935" />
+            ) : (
+              <Text style={styles.submitButtonText}>Publicar reseña</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {!user && (
+        <View style={styles.loginPrompt}>
+          <Text style={styles.loginPromptText}>Inicia sesión para escribir una reseña</Text>
+        </View>
+      )}
+
+      <View style={styles.divider} />
+
+      {/* Reseñas existentes */}
       <View style={styles.reviewsSection}>
-        {reviews.map((review, idx) => (
-          <View key={idx} style={styles.reviewCard}>
-            <Image source={Images.profilePlaceholder} style={styles.userAvatarLarge} />
-            <View style={styles.reviewContent}>
-              <Text style={styles.movieTitleReview}>{movie.title}</Text>
-              <Text style={styles.reviewBy}>
-                <Text style={styles.reviewByGray}>Reseña de </Text>
-                <Text style={styles.reviewByUser}>{review.userName}</Text>
-              </Text>
-              <StarRating rating={review.rating} />
-              <Text style={styles.comment}>{review.comment}</Text>
+        {reviews.length > 0 ? (
+          reviews.map((review, idx) => (
+            <View key={idx} style={styles.reviewCard}>
+              <Image 
+                source={
+                  review.user?.profileImage?.url
+                    ? { uri: `http://192.168.0.187:3000${review.user.profileImage.url}` }
+                    : Images.profilePlaceholder
+                }
+                style={styles.userAvatarLarge}
+              />
+              <View style={styles.reviewContent}>
+                <Text style={styles.movieTitleReview}>{movie.title}</Text>
+                <Text style={styles.reviewBy}>
+                  <Text style={styles.reviewByGray}>Reseña de </Text>
+                  <Text style={styles.reviewByUser}>{review.user?.name || "Usuario"}</Text>
+                </Text>
+                <StarRating rating={review.rating} />
+                <Text style={styles.comment}>{review.comment}</Text>
+              </View>
             </View>
-          </View>
-        ))}
+          ))
+        ) : (
+          <Text style={styles.noReviewsText}>No hay reseñas aún. ¡Sé el primero!</Text>
+        )}
       </View>
     </ScrollView>
   );
@@ -476,16 +617,86 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
   },
-  reviewsSection: {
-    marginVertical: 20,
-    width: "100%",
-  },
   sectionTitle: {
     color: "#eeececff",
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
+  },
+  addReviewContainer: {
+    backgroundColor: "#2A273F",
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 16,
+  } as any,
+  addReviewContainerShift: {
+    marginBottom: 300,
+  } as any,
+  addReviewTitle: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  starSelector: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+  selectableStar: {
+    fontSize: 28,
+  },
+  commentInput: {
+    backgroundColor: "#1B1935",
+    borderRadius: 8,
+    padding: 12,
+    color: "#FFF",
+    borderWidth: 1,
+    borderColor: "#444",
+    marginBottom: 8,
+    maxHeight: 100,
+  },
+  charCount: {
+    color: "#999",
+    fontSize: 12,
+    marginBottom: 12,
+    textAlign: "right",
+  },
+  submitButton: {
+    backgroundColor: "#F2A8A8",
+    borderRadius: 8,
+    padding: 12,
+    alignItems: "center",
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    color: "#1B1935",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  loginPrompt: {
+    backgroundColor: "#2A273F",
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: "center",
+  },
+  loginPromptText: {
+    color: "#999",
+    fontSize: 14,
+  },
+  reviewsSection: {
+    marginVertical: 20,
+    width: "100%",
+  },
+  noReviewsText: {
+    color: "#999",
+    fontSize: 14,
+    textAlign: "center",
+    paddingVertical: 20,
   },
   reviewCard: {
     flexDirection: "row",

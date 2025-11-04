@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -62,7 +62,7 @@ function useFavorites(userId?: number | string) {
 
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 const PLACEHOLDER = "https://via.placeholder.com/120x180?text=Sin+Imagen";
-const API_URL = "http://192.168.1.40:3000";
+const API_URL = "http://192.168.0.187:3000";
 
 export default function BuscarScreen() {
   const router = useRouter();

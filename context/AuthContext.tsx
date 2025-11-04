@@ -8,9 +8,7 @@ interface User {
   email: string;
   username: string;
   name?: string | null;
-  // compat antiguo
   avatarUrl?: string | null;
-  // nuevo
   profileImageId?: number | null;
   profileImage?: ProfileImage | null;
 }
@@ -22,19 +20,22 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, username: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>; // 👈 nuevo
+  refreshUser: () => Promise<void>;
+  setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = 'http://192.168.1.40:3000/api';
+const API_URL = 'http://192.168.0.187:3000/api';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => { loadStoredAuth(); }, []);
+  useEffect(() => { 
+    loadStoredAuth(); 
+  }, []);
 
   const loadStoredAuth = async () => {
     try {
@@ -87,7 +88,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!token) return;
       const res = await fetch(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
       if (!res.ok) return;
       const data = await res.json();
@@ -111,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, register, logout, refreshUser }}
+      value={{ user, token, isLoading, login, register, logout, refreshUser, setUser }}
     >
       {children}
     </AuthContext.Provider>

@@ -4,7 +4,7 @@ import { ActivityIndicator, Animated, FlatList, Image, Pressable, ScrollView, St
 import { Images } from "../../assets/images";
 
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
-const API_URL = "http://192.168.1.40:3000";
+const API_URL = "http://192.168.0.187:3000";
 
 const reviews = [
   {

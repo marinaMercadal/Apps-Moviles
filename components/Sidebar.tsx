@@ -18,7 +18,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SIDEBAR_WIDTH = 280;
 
 // Usa el mismo origin que en Settings
-const API_ORIGIN = "http://192.168.1.40:3000";
+const API_ORIGIN = "http://192.168.0.187:3000";
 
 // Helper para armar URL absoluta
 const full = (url?: string | null) =>

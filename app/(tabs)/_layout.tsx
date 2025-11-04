@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 
-const API_ORIGIN = "http://192.168.1.40:3000"; // <- mismo origin que usa tu Settings
+const API_ORIGIN = "http://192.168.0.187:3000"; // <- mismo origin que usa tu Settings
 
 export default function TabsLayout() {
   const { user } = useAuth();
