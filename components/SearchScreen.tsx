@@ -18,14 +18,15 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
-type FavMovie = {
+// Definimos el tipo FavMovie
+interface FavMovie {
   id: string;
   title: string;
   posterUri?: string;
   releaseYear?: string;
-};
+}
 
-// ---- Hook simple de favoritos por usuario (persistente en AsyncStorage)
+// Hook simple de favoritos por usuario (persistente en AsyncStorage)
 function useFavorites(userId?: number | string) {
   const storageKey = useMemo(
     () => (userId ? `favs:${userId}` : undefined),
@@ -48,7 +49,6 @@ function useFavorites(userId?: number | string) {
   };
 
   const isFavorite = (id: string) => favs.some((f) => f.id === id);
-
   const toggleFavorite = async (item: FavMovie) => {
     const exists = isFavorite(item.id);
     const next = exists
@@ -59,21 +59,18 @@ function useFavorites(userId?: number | string) {
 
   return { favs, isFavorite, toggleFavorite };
 }
-// ---------------------------------------------------------------
 
-const API_KEY = "fc59c56c3c4eee0a42ffda0c5cbcc701";
-const BASE_URL = "https://api.themoviedb.org/3";
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 const PLACEHOLDER = "https://via.placeholder.com/120x180?text=Sin+Imagen";
+const API_URL = "http://192.168.0.187:3000";
 
 export default function BuscarScreen() {
   const router = useRouter();
-  const { user } = useAuth(); // <-- si hay user, mostramos corazón y guardamos
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [popular, setPopular] = useState<any[]>([]);
-
   const { isFavorite, toggleFavorite } = useFavorites(user?.id);
 
   useEffect(() => {
@@ -82,34 +79,50 @@ export default function BuscarScreen() {
 
   const fetchPopularMovies = async () => {
     try {
-      const res = await fetch(
-        `${BASE_URL}/movie/popular?api_key=${API_KEY}&language=es-ES&page=1`
-      );
+      console.log("Fetching popular movies...");
+      const res = await fetch(`${API_URL}/api/movies/popular`);
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
-      setPopular(data.results.slice(0, 12));
-      setResults(data.results.slice(0, 12));
+      const popularMovies = data.results?.slice(0, 12) || [];
+      setPopular(popularMovies);
+      setResults(popularMovies);
+      console.log(`✅ Loaded ${popularMovies.length} popular movies`);
     } catch (error) {
-      console.error("Error fetching popular movies:", error);
+      console.error("❌ Error fetching popular movies:", error);
     }
   };
 
   const searchMovies = async (text: string) => {
     setQuery(text);
+
     if (!text) {
       setResults(popular);
       return;
     }
+
     setLoading(true);
     try {
-      const res = await fetch(
-        `${BASE_URL}/search/movie?api_key=${API_KEY}&language=es-ES&query=${encodeURIComponent(
-          text
-        )}&page=1`
-      );
+      console.log(`🔍 Searching for: ${text}`);
+      const url = `${API_URL}/api/search?query=${encodeURIComponent(text)}&page=1`;
+      console.log(`Request URL: ${url}`);
+
+      const res = await fetch(url);
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
+      console.log(`✅ Found ${data.results?.length || 0} movies (Total: ${data.total_results})`);
       setResults(data.results || []);
     } catch (error) {
-      console.error("Error searching movies:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("❌ Error searching movies:", errorMessage);
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -127,6 +140,7 @@ export default function BuscarScreen() {
       );
       return;
     }
+
     const posterUri = item.poster_path ? IMG_URL + item.poster_path : PLACEHOLDER;
     await toggleFavorite({
       id: String(item.id),
@@ -141,7 +155,6 @@ export default function BuscarScreen() {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <Text style={styles.title}>Buscar Películas</Text>
-
           <TextInput
             style={styles.searchInput}
             placeholder="Escribí el nombre de la película..."
@@ -164,18 +177,25 @@ export default function BuscarScreen() {
             numColumns={2}
             columnWrapperStyle={{ justifyContent: "space-between", marginBottom: 12 }}
             renderItem={({ item }) => {
-              const posterUri = item.poster_path ? IMG_URL + item.poster_path : PLACEHOLDER;
+              const posterUri = item.poster_path
+                ? IMG_URL + item.poster_path
+                : PLACEHOLDER;
               const fav = isFavorite(String(item.id));
 
               return (
                 <View style={styles.movieCard}>
-                  <TouchableOpacity onPress={() => router.push(`/movie/${item.id}`)}>
+                  <TouchableOpacity
+                    onPress={() => router.push(`/movie/${item.id}`)}
+                  >
                     <Image source={{ uri: posterUri }} style={styles.poster} />
                   </TouchableOpacity>
 
-                  {/* ❤️ corazon SOLO si hay sesión */}
+                  {/* ❤️ corazón SOLO si hay sesión */}
                   {user && (
-                    <Pressable style={styles.heartIcon} onPress={() => onToggleFav(item)}>
+                    <Pressable
+                      style={styles.heartIcon}
+                      onPress={() => onToggleFav(item)}
+                    >
                       <Ionicons
                         name={fav ? "heart" : "heart-outline"}
                         size={22}
@@ -201,7 +221,11 @@ export default function BuscarScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1B1935", padding: 16 },
+  container: {
+    flex: 1,
+    backgroundColor: "#1B1935",
+    padding: 16,
+  },
   title: {
     fontSize: 20,
     fontWeight: "bold",
@@ -218,7 +242,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
   },
-  infoText: { color: "#ccc", textAlign: "center", marginBottom: 12, fontSize: 16 },
+  infoText: {
+    color: "#ccc",
+    textAlign: "center",
+    marginBottom: 12,
+    fontSize: 16,
+  },
   movieCard: {
     flex: 1,
     alignItems: "center",
@@ -226,8 +255,14 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
     position: "relative",
+    marginHorizontal: 6,
   },
-  poster: { width: 120, height: 180, borderRadius: 6, marginBottom: 6 },
+  poster: {
+    width: 120,
+    height: 180,
+    borderRadius: 6,
+    marginBottom: 6,
+  },
   heartIcon: {
     position: "absolute",
     top: 6,
@@ -236,6 +271,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 4,
   },
-  movieTitle: { color: "#fff", fontSize: 14, fontWeight: "600", textAlign: "center" },
-  movieYear: { color: "#aaa", fontSize: 12, marginTop: 2 },
+  movieTitle: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  movieYear: {
+    color: "#aaa",
+    fontSize: 12,
+    marginTop: 2,
+  },
 });

@@ -1,11 +1,10 @@
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Images } from "../../assets/images"; // tus imágenes locales
+import { ActivityIndicator, Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Images } from "../../assets/images";
 
-const API_KEY = "fc59c56c3c4eee0a42ffda0c5cbcc701";
-const BASE_URL = "https://api.themoviedb.org/3";
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
+const API_URL = "http://192.168.0.187:3000";
 
 const reviews = [
   {
@@ -39,6 +38,8 @@ const reviews = [
 
 export default function HomeScreen() {
   const [popularMovies, setPopularMovies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPopularMovies();
@@ -46,11 +47,38 @@ export default function HomeScreen() {
 
   const fetchPopularMovies = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=es-ES&page=1`);
-      const data = await res.json();
-      setPopularMovies(data.results || []);
+      setLoading(true);
+      setError(null);
+
+      console.log(`Fetching from: ${API_URL}/api/movies/popular`);
+
+      const res = await fetch(`${API_URL}/api/movies/popular`);
+
+      // Verificar que la respuesta sea OK
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      // Obtener el texto primero para debuggear
+      const text = await res.text();
+      console.log("Raw response:", text.substring(0, 200)); // Log de los primeros 200 caracteres
+
+      // Intentar parsear como JSON
+      const data = JSON.parse(text);
+
+      if (data.results && Array.isArray(data.results)) {
+        setPopularMovies(data.results);
+        console.log(`✅ Loaded ${data.results.length} movies`);
+      } else {
+        throw new Error("Invalid data format from API");
+      }
     } catch (error) {
-      console.error("Error fetching popular movies:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("❌ Error fetching popular movies:", errorMessage);
+      setError(errorMessage);
+      setPopularMovies([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,19 +93,38 @@ export default function HomeScreen() {
 
       <View style={styles.popularSection}>
         <Text style={styles.genreTitle}>Películas Populares Este Mes</Text>
-        <FlatList
-          data={popularMovies}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <MovieCard
-              poster={{ uri: IMG_URL + item.poster_path }}
-              id={item.id.toString()}
-              title={item.title}
-            />
-          )}
-        />
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#F2A8A8" />
+            <Text style={styles.loadingText}>Cargando películas...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>❌ Error: {error}</Text>
+            <Pressable style={styles.retryButton} onPress={fetchPopularMovies}>
+              <Text style={styles.retryButtonText}>Reintentar</Text>
+            </Pressable>
+          </View>
+        ) : popularMovies.length > 0 ? (
+          <FlatList
+            data={popularMovies}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <MovieCard
+                poster={{ uri: IMG_URL + item.poster_path }}
+                id={item.id.toString()}
+                title={item.title}
+              />
+            )}
+          />
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No se encontraron películas</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.reviewsSection}>
@@ -85,19 +132,15 @@ export default function HomeScreen() {
         {reviews.map((review) => (
           <View key={review.id} style={styles.reviewCard}>
             <Image source={review.userAvatar} style={styles.userAvatarLarge} />
-
             <View style={styles.reviewContent}>
               <Text style={styles.movieTitleReview}>{review.movieTitle}</Text>
               <Text style={styles.reviewBy}>
                 <Text style={styles.reviewByGray}>Reseña de </Text>
                 <Text style={styles.reviewByUser}>{review.userName}</Text>
               </Text>
-
               <StarRating rating={review.rating} />
-
               <Text style={styles.comment}>{review.comment}</Text>
             </View>
-
             <Image source={review.moviePoster} style={styles.moviePosterSmall} />
           </View>
         ))}
@@ -157,15 +200,93 @@ function StarRating({ rating }: StarRatingProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1B1935", paddingHorizontal: 16 },
-  welcomeSection: { marginTop: 20, marginBottom: 20 },
-  welcomeText: { color: "#F2A8A8", fontSize: 22, fontWeight: "bold" },
-  welcomeSubText: { color: "#DDD", fontSize: 14, marginTop: 4 },
-  popularSection: { height: 250, marginVertical: 10 },
-  moviePoster: { width: 120, height: 180, borderRadius: 8, marginRight: 12 },
-  genreTitle: { color: "#eeececff", fontSize: 18, marginBottom: 6, fontWeight: "bold" },
-  reviewsSection: { marginVertical: 20 },
-  sectionTitle: { color: "#eeececff", fontSize: 18, fontWeight: "bold", marginBottom: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: "#1B1935",
+    paddingHorizontal: 16,
+  },
+  welcomeSection: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  welcomeText: {
+    color: "#F2A8A8",
+    fontSize: 22,
+    fontWeight: "bold",
+  },
+  welcomeSubText: {
+    color: "#DDD",
+    fontSize: 14,
+    marginTop: 4,
+  },
+  popularSection: {
+    marginVertical: 10,
+  },
+  genreTitle: {
+    color: "#eeececff",
+    fontSize: 18,
+    marginBottom: 12,
+    fontWeight: "bold",
+  },
+  loadingContainer: {
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    color: "#DDD",
+    marginTop: 10,
+    fontSize: 14,
+  },
+  errorContainer: {
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#2A1F1F",
+    borderRadius: 10,
+    padding: 16,
+  },
+  errorText: {
+    color: "#FF6B6B",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  retryButton: {
+    backgroundColor: "#F2A8A8",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  retryButtonText: {
+    color: "#1B1935",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  emptyContainer: {
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    color: "#AAA",
+    fontSize: 14,
+  },
+  moviePoster: {
+    width: 120,
+    height: 180,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  reviewsSection: {
+    marginVertical: 20,
+  },
+  sectionTitle: {
+    color: "#eeececff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
   reviewCard: {
     flexDirection: "row",
     backgroundColor: "#2A273F",
@@ -174,13 +295,45 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     alignItems: "flex-start",
   },
-  userAvatarLarge: { width: 60, height: 60, borderRadius: 30, marginRight: 12 },
-  reviewContent: { flex: 1, marginRight: 10 },
-  movieTitleReview: { color: "#FFF", fontWeight: "bold", fontSize: 16, marginBottom: 2 },
-  reviewBy: { fontSize: 12, marginBottom: 4 },
-  reviewByGray: { color: "#AAA" },
-  reviewByUser: { color: "#F2A8A8", fontWeight: "bold" },
-  stars: { color: "#d20404ff", fontSize: 14, marginBottom: 4 },
-  comment: { color: "#DDD", fontSize: 14 },
-  moviePosterSmall: { width: 60, height: 80, borderRadius: 6 },
+  userAvatarLarge: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 12,
+  },
+  reviewContent: {
+    flex: 1,
+    marginRight: 10,
+  },
+  movieTitleReview: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  reviewBy: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  reviewByGray: {
+    color: "#AAA",
+  },
+  reviewByUser: {
+    color: "#F2A8A8",
+    fontWeight: "bold",
+  },
+  stars: {
+    color: "#d20404ff",
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  comment: {
+    color: "#DDD",
+    fontSize: 14,
+  },
+  moviePosterSmall: {
+    width: 60,
+    height: 80,
+    borderRadius: 6,
+  },
 });
