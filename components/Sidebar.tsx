@@ -2,91 +2,83 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, usePathname } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    Image,
-    Modal,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  Image,
+  Modal,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SIDEBAR_WIDTH = 280;
 
-interface SidebarProps {
+
+export interface SidebarProps {
   visible: boolean;
   onClose: () => void;
 }
 
-export default function Sidebar({visible,onClose}:SidebarProps){
-  const slideAnim=useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
-  const [modalVisible,setModalVisible]=useState(false);
-  const pathname=usePathname();
+const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
+  const slideAnim = useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
+  const [modalVisible, setModalVisible] = useState(false);
+  const pathname = usePathname();
   const { logout, user } = useAuth();
 
-  useEffect(()=>{
-    if(visible){
+  useEffect(() => {
+    if (visible) {
       setModalVisible(true);
-      Animated.timing(slideAnim,{
-        toValue:0,
-        duration:300,
-        useNativeDriver:true,
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
       }).start();
-    }else{
-      Animated.timing(slideAnim,{
-        toValue:-SIDEBAR_WIDTH,
-        duration:250,
-        useNativeDriver:true,
-      }).start(()=>{
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: -SIDEBAR_WIDTH,
+        duration: 250,
+        useNativeDriver: true,
+      }).start(() => {
         setModalVisible(false);
       });
     }
-  },[visible]);
+  }, [visible]);
 
-  const handleClose=()=>{
-    onClose();
+  const handleClose = () => onClose();
+
+  
+  const getActiveRoute = () => {
+    if (pathname === "/") return "home";
+    if (pathname === "/search") return "search";
+    if (pathname === "/profile/profile") return "profile";
+    if (pathname === "/favorites/favorites") return "likes";
+    if (pathname === "/watchlist") return "watchlist";
+    return "";
   };
 
-  const getActiveRoute=()=>{
-    if(pathname==="/") return "home";
-    if(pathname==="/sidebar/films") return "films";
-    if(pathname==="/search") return "search";
-    if(pathname==="/profile") return "profile";
-    if(pathname==="/watchlist") return "watchlist";
-    if(pathname==="/diary") return "diary";
-    if(pathname==="/reviews") return "reviews";
-    if(pathname==="/lists") return "lists";
-    if(pathname==="/likes") return "likes";
-    if(pathname==="/settings") return "settings";
-    return "home";
-  };
-
-  const menuItems=[
-    {id:"home",title:"Inicio",icon:"home-outline",active:getActiveRoute()==="home"},
-    {id:"films",title:"Películas",icon:"film-outline",active:getActiveRoute()==="films"},
-    {id:"diary",title:"Diario",icon:"calendar-outline",active:getActiveRoute()==="diary"},
-    {id:"reviews",title:"Reseñas",icon:"book-outline",active:getActiveRoute()==="reviews"},
-    {id:"watchlist",title:"Ver más tarde",icon:"list-outline",active:getActiveRoute()==="watchlist"},
-    {id:"lists",title:"Listas",icon:"albums-outline",active:getActiveRoute()==="lists"},
-    {id:"likes",title:"Me gusta",icon:"heart-outline",active:getActiveRoute()==="likes"},
-    {id:"settings",title:"Ajustes",icon:"settings-outline",active:getActiveRoute()==="settings"},
+  const menuItems = [
+    { id: "home", title: "Inicio", icon: "home-outline" },
+    { id: "films", title: "Películas", icon: "film-outline" },
+    { id: "watchlist", title: "Ver más tarde", icon: "list-outline" },
+    { id: "likes", title: "Me gusta", icon: "heart-outline" },
+    { id: "settings", title: "Ajustes", icon: "settings-outline" },
   ];
 
-  const handleItemPress=(id:string)=>{
-    if(id==="home"){
-      router.push("/");
-    }else if(id==="films"){
-      router.push("../sidebar/films");
-    }
+  const handleItemPress = (id: string) => {
+    if (id === "home") router.push("/");
+    else if (id === "films") router.push("/sidebar/films");
+    //else if (id === "watchlist") router.push("/watchlist");
+    else if (id === "likes") router.push("../favorites");
+    //else if (id === "settings") router.push("/settings");
     handleClose();
   };
 
   const handleProfilePress = () => {
-    router.push("../profile/profile");
+    router.push("/profile/profile");
     handleClose();
   };
 
@@ -103,24 +95,32 @@ export default function Sidebar({visible,onClose}:SidebarProps){
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-        <Animated.View 
+        <Animated.View
           style={[
             styles.sidebar,
             {
-              transform:[{translateX:slideAnim}],
-            }
+              transform: [{ translateX: slideAnim }],
+            },
           ]}
         >
           <SafeAreaView style={styles.container}>
+            {/* Perfil */}
             <View style={styles.profileSection}>
-              <TouchableOpacity style={styles.profileContainer} onPress={handleProfilePress}>
+              <TouchableOpacity
+                style={styles.profileContainer}
+                onPress={handleProfilePress}
+              >
                 <Image
                   source={require("../assets/images/profile-placeholder.png")}
                   style={styles.profileImage}
                 />
                 <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{user?.name || "Usuario"}</Text>
-                  <Text style={styles.profileHandle}>@{user?.username || "usuario"}</Text>
+                  <Text style={styles.profileName}>
+                    {user?.name || "Usuario"}
+                  </Text>
+                  <Text style={styles.profileHandle}>
+                    @{user?.username || "usuario"}
+                  </Text>
                 </View>
               </TouchableOpacity>
               <View style={styles.statsContainer}>
@@ -132,40 +132,52 @@ export default function Sidebar({visible,onClose}:SidebarProps){
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Menú */}
             <View style={styles.menuSection}>
-              {menuItems.map((item)=>(
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.menuItem,
-                    item.active&&styles.activeMenuItem
-                  ]}
-                  onPress={()=>handleItemPress(item.id)}
-                >
-                  <Ionicons
-                    name={item.icon as any}
-                    size={24}
-                    color={item.active?"#1A1833":"#B0B0B0"}
-                  />
-                  <Text
+              {menuItems.map((item) => {
+                const active = getActiveRoute() === item.id;
+                return (
+                  <TouchableOpacity
+                    key={item.id}
                     style={[
-                      styles.menuText,
-                      item.active&&styles.activeMenuText
+                      styles.menuItem,
+                      active && styles.activeMenuItem,
                     ]}
+                    onPress={() => handleItemPress(item.id)}
                   >
-                    {item.title}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Ionicons
+                      name={item.icon as any}
+                      size={24}
+                      color={active ? "#1A1833" : "#B0B0B0"}
+                    />
+                    <Text
+                      style={[
+                        styles.menuText,
+                        active && styles.activeMenuText,
+                      ]}
+                    >
+                      {item.title}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+
+            {/* Logout */}
             <View style={styles.logoutSection}>
-              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                <Ionicons name="log-out-outline" size={24} color="#B0B0B0"/>
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={handleLogout}
+              >
+                <Ionicons name="log-out-outline" size={24} color="#B0B0B0" />
                 <Text style={styles.menuText}>Cerrar sesión</Text>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
         </Animated.View>
+
+        {/* Área para cerrar */}
         <TouchableOpacity
           style={styles.closeArea}
           onPress={handleClose}
@@ -174,7 +186,9 @@ export default function Sidebar({visible,onClose}:SidebarProps){
       </View>
     </Modal>
   );
-}
+};
+
+export default Sidebar;
 
 const styles = StyleSheet.create({
   overlay: {

@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "./Sidebar";
 
@@ -48,12 +48,7 @@ export default function Header() {
             <View style={[styles.line, { width: 12 }]} />
           </View>
         </TouchableOpacity>
-        <TouchableOpacity activeOpacity={0.7} onPress={navigateToProfile}>
-          <Image
-            source={require("../assets/images/profile-placeholder.png")}
-            style={styles.profileImage}
-          />
-        </TouchableOpacity>
+        
       </View>
       <Sidebar 
         visible={sidebarVisible} 

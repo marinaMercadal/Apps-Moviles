@@ -1,27 +1,32 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import Header from "../../components/Header";
 import { useAuth } from "../../context/AuthContext";
 
 export default function TabsLayout() {
   const { user } = useAuth();
   const router = useRouter();
+  const [showTabs, setShowTabs] = useState(false);
+
+  useEffect(() => {
+    setShowTabs(false);
+    const timer = setTimeout(() => setShowTabs(true), 0);
+    return () => clearTimeout(timer);
+  }, [user]);
 
   const handleProfilePress = () => {
     if (user) router.push("/profile/profile");
     else router.push("/login");
   };
 
-  const handleFavsPress = () => {
-    if (user) router.push("/favorites");   // ruta a tu pantalla de favoritos
-    else router.push("/login");
-  };
+  if (!showTabs) return null;
 
   return (
     <View style={styles.container}>
-      <Header />
+      
       <Tabs
+        key={user ? "logged" : "guest"} 
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
@@ -42,44 +47,60 @@ export default function TabsLayout() {
           tabBarShowLabel: false,
         }}
       >
+        {/* 🔍 Search */}
         <Tabs.Screen
           name="search"
           options={{
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? "search" : "search-outline"} size={26} color={color} />
+              <Ionicons
+                name={focused ? "search" : "search-outline"}
+                size={26}
+                color={color}
+              />
             ),
           }}
         />
+
+        {/* 🏠 Home */}
         <Tabs.Screen
           name="index"
           options={{
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? "home" : "home-outline"} size={26} color={color} />
+              <Ionicons
+                name={focused ? "home" : "home-outline"}
+                size={26}
+                color={color}
+              />
             ),
           }}
         />
 
-        
-        <Tabs.Screen
-          name="favorites" 
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? "heart" : "heart-outline"} size={26} color={color} />
-            ),
-          }}
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              handleFavsPress();
-            },
-          }}
-        />
+        {/* ❤️ Favorites — solo si está logueado */}
+        {user && (
+          <Tabs.Screen
+            name="favorites"
+            options={{
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons
+                  name={focused ? "heart" : "heart-outline"}
+                  size={26}
+                  color={color}
+                />
+              ),
+            }}
+          />
+        )}
 
+        {/* 👤 Profile/Login */}
         <Tabs.Screen
           name="login"
           options={{
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? "person-circle" : "person-circle-outline"} size={26} color={color} />
+              <Ionicons
+                name={focused ? "person-circle" : "person-circle-outline"}
+                size={26}
+                color={color}
+              />
             ),
           }}
           listeners={{

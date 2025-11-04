@@ -13,7 +13,6 @@ import {
   View,
 } from "react-native";
 import { Images } from "../../assets/images";
-import Header from "../../components/Header";
 
 const API_KEY = "fc59c56c3c4eee0a42ffda0c5cbcc701";
 const BASE_URL = "https://api.themoviedb.org/3";
@@ -120,7 +119,7 @@ export default function MovieDetails() {
   return (
     
       <ScrollView contentContainerStyle={styles.container}>
-        <Header />
+        
         <View style={styles.topRow}>
 
           <Image source={{ uri: IMG_URL + movie.poster_path }} style={styles.posterLarge} />

@@ -23,14 +23,14 @@ type Mode = "login" | "register";
 export default function LoginScreen() {
   const translateY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
-  const { login, register } = useAuth(); // register(email, password, username, name)
+  const { login, register } = useAuth(); 
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState(""); // register
+  const [username, setUsername] = useState(""); 
   const [name, setName] = useState("");         // register (opcional)
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");   // register
+  const [confirm, setConfirm] = useState("");   
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async () => {

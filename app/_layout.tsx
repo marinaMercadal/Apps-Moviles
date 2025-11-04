@@ -3,7 +3,8 @@ import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { Images } from "../assets/images";
-import { AuthProvider } from "../context/AuthContext";
+import Header from "../components/Header";
+import { AuthProvider, useAuth } from "../context/AuthContext";
 
 function RootLayoutNav() {
   return (
@@ -18,11 +19,14 @@ function RootLayoutNav() {
 
 function RootLayoutContent() {
   const [isReady, setIsReady] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     async function loadAssets() {
       try {
-        const imageAssets = Object.values(Images).map(img => Asset.fromModule(img).downloadAsync());
+        const imageAssets = Object.values(Images).map((img) =>
+          Asset.fromModule(img).downloadAsync()
+        );
         await Promise.all(imageAssets);
       } catch (e) {
         console.warn(e);
@@ -36,16 +40,20 @@ function RootLayoutContent() {
 
   if (!isReady) {
     return (
-      
       <View style={styles.loader}>
-   
         <ActivityIndicator size="large" color="#F2A8A8" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        !user && { paddingTop: 80 }, 
+      ]}
+    >
+      {user && <Header />}
       <RootLayoutNav />
     </View>
   );
@@ -60,13 +68,14 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1B1935" },
-  loader: { 
-    flex: 1, 
-    backgroundColor: "#1B1935", 
-    justifyContent: "center", 
-    alignItems: "center" 
-    
+  container: {
+    flex: 1,
+    backgroundColor: "#1B1935",
   },
-  
+  loader: {
+    flex: 1,
+    backgroundColor: "#1B1935",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
