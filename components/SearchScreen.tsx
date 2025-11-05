@@ -1,68 +1,26 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  Image,
-  Keyboard,
-  KeyboardAvoidingView,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    Alert,
+    FlatList,
+    Image,
+    Keyboard,
+    KeyboardAvoidingView,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-
-// Definimos el tipo FavMovie
-interface FavMovie {
-  id: string;
-  title: string;
-  posterUri?: string;
-  releaseYear?: string;
-}
-
-// Hook simple de favoritos por usuario (persistente en AsyncStorage)
-function useFavorites(userId?: number | string) {
-  const storageKey = useMemo(
-    () => (userId ? `favs:${userId}` : undefined),
-    [userId]
-  );
-  const [favs, setFavs] = useState<FavMovie[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      if (!storageKey) return setFavs([]);
-      const raw = await AsyncStorage.getItem(storageKey);
-      setFavs(raw ? JSON.parse(raw) : []);
-    })();
-  }, [storageKey]);
-
-  const persist = async (next: FavMovie[]) => {
-    if (!storageKey) return;
-    setFavs(next);
-    await AsyncStorage.setItem(storageKey, JSON.stringify(next));
-  };
-
-  const isFavorite = (id: string) => favs.some((f) => f.id === id);
-  const toggleFavorite = async (item: FavMovie) => {
-    const exists = isFavorite(item.id);
-    const next = exists
-      ? favs.filter((f) => f.id !== item.id)
-      : [item, ...favs];
-    await persist(next);
-  };
-
-  return { favs, isFavorite, toggleFavorite };
-}
+import { useFavorites } from "../hooks/useFavorites";
 
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 const PLACEHOLDER = "https://via.placeholder.com/120x180?text=Sin+Imagen";
-const API_URL = "http://192.168.0.187:3000";
+const API_URL = "http://192.168.0.121:3000";
 
 export default function BuscarScreen() {
   const router = useRouter();
@@ -71,7 +29,7 @@ export default function BuscarScreen() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [popular, setPopular] = useState<any[]>([]);
-  const { isFavorite, toggleFavorite } = useFavorites(user?.id);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   useEffect(() => {
     fetchPopularMovies();
@@ -79,7 +37,6 @@ export default function BuscarScreen() {
 
   const fetchPopularMovies = async () => {
     try {
-      console.log("Fetching popular movies...");
       const res = await fetch(`${API_URL}/api/movies/popular`);
 
       if (!res.ok) {
@@ -90,9 +47,8 @@ export default function BuscarScreen() {
       const popularMovies = data.results?.slice(0, 12) || [];
       setPopular(popularMovies);
       setResults(popularMovies);
-      console.log(`✅ Loaded ${popularMovies.length} popular movies`);
     } catch (error) {
-      console.error("❌ Error fetching popular movies:", error);
+      console.error("Error fetching popular movies:", error);
     }
   };
 
@@ -106,9 +62,7 @@ export default function BuscarScreen() {
 
     setLoading(true);
     try {
-      console.log(`🔍 Searching for: ${text}`);
       const url = `${API_URL}/api/search?query=${encodeURIComponent(text)}&page=1`;
-      console.log(`Request URL: ${url}`);
 
       const res = await fetch(url);
 
@@ -117,11 +71,10 @@ export default function BuscarScreen() {
       }
 
       const data = await res.json();
-      console.log(`✅ Found ${data.results?.length || 0} movies (Total: ${data.total_results})`);
       setResults(data.results || []);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      console.error("❌ Error searching movies:", errorMessage);
+      console.error("Error searching movies:", errorMessage);
       setResults([]);
     } finally {
       setLoading(false);

@@ -1,29 +1,153 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Image,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { Images } from '../../assets/images';
 import { useAuth } from '../../context/AuthContext';
 
+const API_URL = 'http://192.168.0.121:3000';
+const API_ORIGIN = 'http://192.168.0.121:3000';
+
 interface Movie{
   id:string;
   title:string;
-  image:any;
+  poster_path:string;
   rating?:number;
-  year?:string;
+  release_date?:string;
+}
+
+interface UserProfile {
+  favoriteMovies: Movie[];
+  recentlyWatched: Movie[];
+  recentReviews: any[];
+  stats: {
+    totalMovies: number;
+    moviesThisYear: number;
+    lists: number;
+    reviews: number;
+  };
 }
 
 const ProfileScreen=()=>{
   const { user } = useAuth();
   const router = useRouter();
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfileData();
+    }
+  }, [user]);
+
+    const fetchProfileData = async () => {
+    try {
+      setLoading(true);
+      
+      const token = await getToken();
+      
+      // Fetch favorites from the correct endpoint
+      const favoritesRes = await fetch(`${API_URL}/api/favorites`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      // Fetch user's reviews
+      const reviewsRes = await fetch(`${API_URL}/api/reviews/my-reviews`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      let favorites: Movie[] = [];
+      if (favoritesRes.ok) {
+        const favData = await favoritesRes.json();
+        // Convert favorites to Movie format
+        favorites = (Array.isArray(favData) ? favData : []).map((fav: any) => ({
+          id: fav.movieId,
+          title: fav.title,
+          poster_path: fav.posterPath,
+          release_date: fav.releaseDate
+        }));
+      }
+
+      // Get reviewed movies (películas con reseñas)
+      let reviewedMovies: Movie[] = [];
+      let reviews: any[] = [];
+      if (reviewsRes.ok) {
+        const reviewData = await reviewsRes.json();
+        reviews = reviewData.reviews || [];
+        
+        const movieDetailsPromises = reviews.map(async (review: any) => {
+          try {
+            const tmdbRes = await fetch(
+              `${API_URL}/api/movies/${review.movieId}`
+            );
+            if (tmdbRes.ok) {
+              const movieData = await tmdbRes.json();
+              return {
+                id: review.movieId,
+                title: movieData.title,
+                poster_path: movieData.poster_path,
+                rating: review.rating,
+                release_date: movieData.release_date
+              };
+            }
+          } catch (error) {
+            console.error(`Error fetching movie ${review.movieId}:`, error);
+          }
+          return null;
+        });
+        
+        const moviesData = await Promise.all(movieDetailsPromises);
+        reviewedMovies = moviesData.filter((movie) => movie !== null) as Movie[];
+      }
+
+      const stats = {
+        totalMovies: favorites.length,
+        moviesThisYear: 0,
+        lists: 0,
+        reviews: reviews.length
+      };
+
+      setProfileData({
+        favoriteMovies: favorites,
+        recentlyWatched: reviewedMovies,
+        recentReviews: reviews.slice(0, 3),
+        stats
+      });
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+      setProfileData({
+        favoriteMovies: [],
+        recentlyWatched: [],
+        recentReviews: [],
+        stats: { totalMovies: 0, moviesThisYear: 0, lists: 0, reviews: 0 }
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getToken = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      return await AsyncStorage.getItem('token');
+    } catch (error) {
+      console.error('Error getting token:', error);
+      return null;
+    }
+  };
 
   if (!user) {
     return (
@@ -44,78 +168,19 @@ const ProfileScreen=()=>{
       </SafeAreaView>
     );
   }
-  
-  const favoriteFilms:Movie[]=[
-    {
-      id:'1',
-      title:'homoArgentum',
-      image:Images.homoArgentum,
-      rating:5,
-      year:'2025'
-    },
-    {
-      id:'2',
-      title:'materialists',
-      image:Images.materialists,
-      rating:5,
-      year:'2025'
-    },
-    {
-      id:'3',
-      title:'lilo Y Stitch',
-      image:Images.liloYStitch,
-      rating:4.5,
-      year:'2025'
-    },
-    {
-      id:'4',
-      title:'hot Milk',
-      image:Images.hotMilk,
-      rating:4.5,
-      year:'2025'
-    }
-  ];
 
-  const recentWatched:Movie[]=[
-    {
-      id:'5',
-      title:'weapons',
-      image:Images.weapons,
-      rating:4,
-      year:'2025'
-    },
-    {
-      id:'6',
-      title:'the Wrong Paris',
-      image:Images.wrongParis,
-      rating:4,
-      year:'2025'
-    },
-    {
-      id:'7',
-      title:'Enemies',
-      image:Images.enemies,
-      rating:3.5,
-      year:'2025'
-    },
-    {
-      id:'9',
-      title:'The Batman',
-      image:Images.batman,
-      rating:5,
-      year:'2022'
-    }
-  ];
-
-  const recentReviews:Movie[]=[
-    {
-      id:'10',
-      title:'weapons',
-      image:Images.weapons,
-      rating:4,
-      year:'2025'
-    }
-  ];
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={[styles.loginPrompt, { justifyContent: 'center' }]}>
+          <ActivityIndicator size="large" color="#F2A8A8" />
+          <Text style={[styles.loginSubtitle, { marginTop: 20 }]}>
+            Cargando perfil...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const renderStars=(rating:number)=>{
     const fullStars=Math.floor(rating);
@@ -140,22 +205,43 @@ const ProfileScreen=()=>{
     return stars;
   };
 
-  const renderMovieGrid=(movies:Movie[],showRating:boolean=false)=>(
-    <View style={styles.movieGrid}>
-      {movies.map((movie)=>(
-        <TouchableOpacity key={movie.id} style={styles.movieItem}>
-          <Image source={movie.image} style={styles.moviePoster} />
-          {showRating&&(
-            <View style={styles.ratingContainer}>
-              <View style={styles.stars}>
-                {renderStars(movie.rating||0)}
+  // Helper para armar URL absoluta del avatar
+  const full = (url?: string | null) =>
+    url ? (url.startsWith("http") ? url : `${API_ORIGIN}${url}`) : undefined;
+
+  const avatarUri = full(user?.profileImage?.url ?? user?.avatarUrl ?? null);
+
+  const renderMovieScroll=(movies:Movie[],showRating:boolean=false)=>(
+    <ScrollView 
+      horizontal 
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.movieScrollContainer}
+    >
+      {movies.length === 0 ? (
+        <Text style={styles.emptyText}>No hay películas para mostrar</Text>
+      ) : (
+        movies.map((movie)=>(
+          <TouchableOpacity 
+            key={movie.id} 
+            style={styles.movieScrollItem}
+            onPress={() => router.push(`/movie/${movie.id}`)}
+          >
+            <Image 
+              source={{ uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}` }} 
+              style={styles.movieScrollPoster} 
+            />
+            {showRating&&movie.rating&&(
+              <View style={styles.ratingContainer}>
+                <View style={styles.stars}>
+                  {renderStars(movie.rating)}
+                </View>
+                <Text style={styles.readReview}>Leer Reseña ›</Text>
               </View>
-              <Text style={styles.readReview}>Leer Reseña ›</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      ))}
-    </View>
+            )}
+          </TouchableOpacity>
+        ))
+      )}
+    </ScrollView>
   );
 
   return(
@@ -171,84 +257,44 @@ const ProfileScreen=()=>{
           
           <View style={styles.profileInfo}>
             <Image 
-              source={Images.profilePlaceholder} 
+              source={avatarUri ? { uri: avatarUri } : Images.profilePlaceholder}
               style={styles.profileImage}
             />
             
-            <View style={styles.nameContainer}>
-              <Text style={styles.nameText}>{user?.name || 'Usuario'}</Text>
-              <View style={styles.proBadge}>
-                <Text style={styles.proText}>PRO</Text>
-              </View>
-            </View>
-            
-            <View style={styles.followContainer}>
-              <Text style={styles.followText}>0 Seguidores</Text>
-              <Text style={styles.followText}>0 Siguiendo</Text>
-            </View>
+            <Text style={styles.nameText}>{user?.name || 'Usuario'}</Text>
           </View>
         </View>
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>33</Text>
+            <Text style={styles.statNumber}>{profileData?.stats.totalMovies || 0}</Text>
             <Text style={styles.statLabel}>Películas Totales</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber,{color:'#b794f6'}]}>8</Text>
-            <Text style={styles.statLabel}>Películas Este Año</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>2</Text>
+            <Text style={styles.statNumber}>{profileData?.stats.lists || 0}</Text>
             <Text style={styles.statLabel}>Listas</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber,{color:'#b794f6'}]}>6</Text>
+            <Text style={styles.statNumber}>
+              {profileData?.stats.reviews || 0}
+            </Text>
             <Text style={styles.statLabel}>Reseñas</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Películas Favoritas de {user?.name || 'Usuario'}</Text>
-          {renderMovieGrid(favoriteFilms)}
+          {renderMovieScroll(profileData?.favoriteMovies || [])}
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Vistas Recientemente por {user?.name || 'Usuario'}</Text>
+            <Text style={styles.sectionTitle}>Películas Reseñadas por {user?.name || 'Usuario'}</Text>
             <TouchableOpacity>
               <Text style={styles.seeAllText}>Ver Todo</Text>
             </TouchableOpacity>
           </View>
-          {renderMovieGrid(recentWatched,true)}
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Reseñas Recientes de {user?.name || 'Usuario'}</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>Ver Todo</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.reviewItem}>
-            <Image source={Images.profilePlaceholder} style={styles.reviewerImage} />
-            <View style={styles.reviewContent}>
-              <View style={styles.reviewHeader}>
-                <Text style={styles.reviewerName}>Weapons</Text>
-                <Text style={styles.reviewYear}>2025</Text>
-              </View>
-              <Text style={styles.reviewBy}>Reseña por {user?.name || 'Usuario'}</Text>
-              <View style={styles.reviewStars}>
-                {renderStars(4)}
-                <Text style={styles.likeCount}>🗨 0</Text>
-              </View>
-              <Text style={styles.reviewText}>
-                Muy buena película, ultra recomendable para ver con amigas y familia! 
-              </Text>
-            </View>
-            <Image source={Images.weapons} style={styles.reviewMoviePoster} />
-          </View>
+          {renderMovieScroll(profileData?.recentlyWatched || [], true)}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -289,27 +335,11 @@ const styles=StyleSheet.create({
     borderRadius:40,
     marginBottom:10,
   },
-  nameContainer:{
-    flexDirection:'row',
-    alignItems:'center',
-    marginBottom:10,
-  },
   nameText:{
     fontSize:24,
     fontWeight:'bold',
     color:'white',
-    marginRight:10,
-  },
-  proBadge:{
-    backgroundColor:'#ff6b6b',
-    paddingHorizontal:8,
-    paddingVertical:2,
-    borderRadius:4,
-  },
-  proText:{
-    color:'white',
-    fontSize:12,
-    fontWeight:'bold',
+    marginBottom:10,
   },
   followContainer:{
     flexDirection:'row',
@@ -331,7 +361,7 @@ const styles=StyleSheet.create({
   statNumber:{
     fontSize:20,
     fontWeight:'bold',
-    color:'#f4a261',
+    color:'white',
     marginBottom:3,
   },
   statLabel:{
@@ -369,6 +399,18 @@ const styles=StyleSheet.create({
   moviePoster:{
     width:'100%',
     height:100,
+    borderRadius:8,
+  },
+  movieScrollContainer:{
+    paddingRight:20,
+  },
+  movieScrollItem:{
+    width:120,
+    marginRight:12,
+  },
+  movieScrollPoster:{
+    width:120,
+    height:180,
     borderRadius:8,
   },
   ratingContainer:{
@@ -438,6 +480,12 @@ const styles=StyleSheet.create({
     width:60,
     height:80,
     borderRadius:6,
+  },
+  emptyText: {
+    color: '#8b94a8',
+    fontSize: 14,
+    textAlign: 'center',
+    marginVertical: 20,
   },
   loginPrompt: {
     flex: 1,

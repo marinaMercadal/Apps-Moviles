@@ -13,10 +13,10 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
-//maru:192.168.0.187
+//maru:192.168.0.121
 //martu: http://192.168.1.40:3000/api
 
-const API_URL = "http://192.168.0.187:3000/api";
+const API_URL = "http://192.168.0.121:3000/api";
 const API_ORIGIN = API_URL.replace(/\/api$/, "");
 
 type AvatarItem = { id: number; url: string; label?: string };
@@ -109,8 +109,6 @@ export default function SettingsScreen() {
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.message || "No se pudo actualizar el avatar");
-
-      console.log("💾 Avatar guardado:", j.user);
 
       await AsyncStorage.setItem("user", JSON.stringify(j.user));
       setUser(j.user);

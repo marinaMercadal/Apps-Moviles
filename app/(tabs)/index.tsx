@@ -4,77 +4,75 @@ import { ActivityIndicator, Animated, FlatList, Image, Pressable, ScrollView, St
 import { Images } from "../../assets/images";
 
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
-const API_URL = "http://192.168.0.187:3000";
+const API_URL = "http://192.168.0.121:3000";
 
-const reviews = [
-  {
-    id: "1",
-    userName: "Martina Ruiz",
-    movieTitle: "Homo Argentum",
-    userAvatar: Images.profilePlaceholder,
-    moviePoster: Images.homoArgentum,
-    rating: 4,
-    comment: "Peliculon, no pare de reirme en toda la pelicula.",
-  },
-  {
-    id: "2",
-    userName: "Marina Mercadal",
-    movieTitle: "Lilo y Stitch",
-    userAvatar: Images.profilePlaceholder,
-    moviePoster: Images.liloYStitch,
-    rating: 5,
-    comment: "Imperdible, la verdad que me hizo reconectar con la película vieja.",
-  },
-  {
-    id: "3",
-    userName: "Carolina Suarez",
-    movieTitle: "Viernes De Locos",
-    userAvatar: Images.profilePlaceholder,
-    moviePoster: Images.viernesDeLocos,
-    rating: 4,
-    comment: "Muy buena película, ultra recomendable para ver con amigas y familia!",
-  },
-];
+interface Review {
+  id: number;
+  userId: number;
+  movieId: string;
+  rating: number;
+  comment: string;  // El backend devuelve 'comment', no 'content'
+  createdAt: string;
+  user?: {
+    name: string;
+    username: string;
+    avatarUrl?: string;
+    profileImage?: {
+      url: string;
+    };
+  };
+  movie?: {
+    title: string;
+    poster_path: string;
+  };
+}
 
 export default function HomeScreen() {
   const [popularMovies, setPopularMovies] = useState<any[]>([]);
+  const [recentReviews, setRecentReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPopularMovies();
+    fetchRecentReviews();
   }, []);
+
+  const fetchRecentReviews = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/reviews/recent`);
+      
+      if (res.ok) {
+        const data = await res.json();
+        setRecentReviews(data.reviews || []);
+      }
+    } catch (error) {
+      console.error('Error fetching recent reviews:', error);
+    }
+  };
 
   const fetchPopularMovies = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log(`Fetching from: ${API_URL}/api/movies/popular`);
-
       const res = await fetch(`${API_URL}/api/movies/popular`);
 
-      // Verificar que la respuesta sea OK
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
-      // Obtener el texto primero para debuggear
       const text = await res.text();
-      console.log("Raw response:", text.substring(0, 200)); // Log de los primeros 200 caracteres
-
-      // Intentar parsear como JSON
       const data = JSON.parse(text);
 
       if (data.results && Array.isArray(data.results)) {
         setPopularMovies(data.results);
-        console.log(`✅ Loaded ${data.results.length} movies`);
       } else {
         throw new Error("Invalid data format from API");
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      console.error("❌ Error fetching popular movies:", errorMessage);
+      console.error("Error fetching popular movies:", errorMessage);
       setError(errorMessage);
       setPopularMovies([]);
     } finally {
@@ -129,23 +127,55 @@ export default function HomeScreen() {
 
       <View style={styles.reviewsSection}>
         <Text style={styles.sectionTitle}>Reviews Más Recientes</Text>
-        {reviews.map((review) => (
-          <View key={review.id} style={styles.reviewCard}>
-            <Image source={review.userAvatar} style={styles.userAvatarLarge} />
-            <View style={styles.reviewContent}>
-              <Text style={styles.movieTitleReview}>{review.movieTitle}</Text>
-              <Text style={styles.reviewBy}>
-                <Text style={styles.reviewByGray}>Reseña de </Text>
-                <Text style={styles.reviewByUser}>{review.userName}</Text>
-              </Text>
-              <StarRating rating={review.rating} />
-              <Text style={styles.comment}>{review.comment}</Text>
-            </View>
-            <Image source={review.moviePoster} style={styles.moviePosterSmall} />
-          </View>
-        ))}
+        {recentReviews.length === 0 ? (
+          <Text style={styles.emptyText}>No hay reseñas aún</Text>
+        ) : (
+          recentReviews.map((review) => (
+            <ReviewCard key={review.id} review={review} />
+          ))
+        )}
       </View>
     </ScrollView>
+  );
+}
+
+type ReviewCardProps = {
+  review: Review;
+};
+
+function ReviewCard({ review }: ReviewCardProps) {
+  const router = useRouter();
+  const avatarUri = review.user?.profileImage?.url 
+    ? `${API_URL}${review.user.profileImage.url}`
+    : review.user?.avatarUrl || null;
+  
+  const posterUri = review.movie?.poster_path
+    ? `${IMG_URL}${review.movie.poster_path}`
+    : null;
+
+  const handlePress = () => {
+    router.push(`/movie/${review.movieId}`);
+  };
+
+  return (
+    <Pressable style={styles.reviewCard} onPress={handlePress}>
+      <Image 
+        source={avatarUri ? { uri: avatarUri } : Images.profilePlaceholder} 
+        style={styles.userAvatarLarge} 
+      />
+      <View style={styles.reviewContent}>
+        <Text style={styles.movieTitleReview}>{review.movie?.title || 'Película'}</Text>
+        <Text style={styles.reviewBy}>
+          <Text style={styles.reviewByGray}>Reseña de </Text>
+          <Text style={styles.reviewByUser}>{review.user?.name || 'Usuario'}</Text>
+        </Text>
+        <StarRating rating={review.rating} />
+        <Text style={styles.comment} numberOfLines={3}>{review.comment}</Text>
+      </View>
+      {posterUri && (
+        <Image source={{ uri: posterUri }} style={styles.moviePosterSmall} />
+      )}
+    </Pressable>
   );
 }
 

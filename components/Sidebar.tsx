@@ -2,15 +2,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, usePathname } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Animated,
-  Dimensions,
-  Image,
-  Modal,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Dimensions,
+    Image,
+    Modal,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
@@ -18,7 +18,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SIDEBAR_WIDTH = 280;
 
 // Usa el mismo origin que en Settings
-const API_ORIGIN = "http://192.168.0.187:3000";
+const API_ORIGIN = "http://192.168.0.121:3000";
 
 // Helper para armar URL absoluta
 const full = (url?: string | null) =>
@@ -75,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
   const menuItems = [
     { id: "home", title: "Inicio", icon: "home-outline" },
     { id: "films", title: "Películas", icon: "film-outline" },
-    { id: "watchlist", title: "Ver más tarde", icon: "list-outline" },
+    { id: "watchlist", title: "Mis Listas", icon: "list-outline" },
     { id: "likes", title: "Me gusta", icon: "heart-outline" },
     { id: "settings", title: "Ajustes", icon: "settings-outline" },
   ];
@@ -144,14 +144,6 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
                   </Text>
                 </View>
               </TouchableOpacity>
-              <View style={styles.statsContainer}>
-                <TouchableOpacity style={styles.statButton}>
-                  <Text style={styles.statText}>0 Seguidores</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.statButton}>
-                  <Text style={styles.statText}>0 Siguiendo</Text>
-                </TouchableOpacity>
-              </View>
             </View>
 
             {/* Menú */}
@@ -232,24 +224,24 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 30,
     borderBottomWidth: 0.5,
     borderBottomColor: "rgba(255, 255, 255, 0.1)",
+    alignItems: "center",
   },
   profileContainer: {
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "center",
-    marginBottom: 20,
   },
   profileImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 15,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 15,
     backgroundColor: "#3a3850",
   },
   profileInfo: {
-    flex: 1,
+    alignItems: "center",
   },
   profileName: {
     fontSize: 22,
@@ -261,37 +253,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#B0B0B0",
   },
-  statsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  statButton: {
-    borderWidth: 1,
-    borderColor: "#F2A8A8",
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    flex: 0.48,
-  },
-  statText: {
-    color: "#F2A8A8",
-    fontSize: 14,
-    textAlign: "center",
-    fontWeight: "500",
-  },
   menuSection: {
     flex: 1,
-    paddingTop: 20,
+    paddingTop: 30,
     paddingBottom: 10,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 30,
-    paddingVertical: 12,
+    paddingVertical: 15,
     marginHorizontal: 20,
     borderRadius: 25,
-    marginBottom: 6,
+    marginBottom: 10,
   },
   activeMenuItem: {
     backgroundColor: "#F2A8A8",

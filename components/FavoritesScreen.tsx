@@ -1,47 +1,40 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React from "react";
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
-
-export type FavMovie = { id: string; title: string; posterUri?: string; releaseYear?: string };
+import { useFavorites } from "../hooks/useFavorites";
 
 export default function FavoritesScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const [items, setItems] = useState<FavMovie[]>([]);
+  const { favs: items, toggleFavorite, loading, refresh } = useFavorites();
 
-  const loadFavs = useCallback(async () => {
-    if (!user) { setItems([]); return; }
-    const raw = await AsyncStorage.getItem(`favs:${user.id}`);
-    setItems(raw ? JSON.parse(raw) : []);
-  }, [user]);
-
-  useEffect(() => { loadFavs(); }, [loadFavs]);
-  useFocusEffect(React.useCallback(() => { loadFavs(); }, [loadFavs]));
-
-  const removeFav = async (id: string) => {
-    if (!user) return;
-    const next = items.filter(m => m.id !== id);
-    setItems(next);
-    await AsyncStorage.setItem(`favs:${user.id}`, JSON.stringify(next));
-  };
+  // Recargar favoritos cuando la pantalla obtiene foco
+  useFocusEffect(
+    React.useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   if (!user) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Mi lista</Text>
-        <Text style={styles.empty}>Inicia sesión para ver tu lista.</Text>
+        <Text style={styles.title}>Mis Me Gusta</Text>
+        <Text style={styles.empty}>Inicia sesión para ver tus favoritos.</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mi lista</Text>
-      {items.length === 0 ? (
+      <Text style={styles.title}>Mis Me Gusta</Text>
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color="#F2A8A8" />
+        </View>
+      ) : items.length === 0 ? (
         <Text style={styles.empty}>Aún no tenés favoritos.</Text>
       ) : (
         <FlatList
@@ -57,7 +50,10 @@ export default function FavoritesScreen() {
                   style={styles.poster}
                 />
               </TouchableOpacity>
-              <Pressable style={styles.heartIcon} onPress={() => removeFav(item.id)}>
+              <Pressable 
+                style={styles.heartIcon} 
+                onPress={() => toggleFavorite(item)}
+              >
                 <Ionicons name="heart" size={22} color="#F2A8A8" />
               </Pressable>
               <Text style={styles.titleMovie} numberOfLines={1}>{item.title}</Text>

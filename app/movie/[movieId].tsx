@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -18,8 +19,8 @@ import {
 import { Images } from "../../assets/images";
 import { useAuth } from "../../context/AuthContext";
 
-const BASE_URL = "http://192.168.0.187:3000/api/movies";
-const REVIEWS_BASE_URL = "http://192.168.0.187:3000/api/reviews";
+const BASE_URL = "http://192.168.0.121:3000/api/movies";
+const REVIEWS_BASE_URL = "http://192.168.0.121:3000/api/reviews";
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 
 function StarRating({ rating }: { rating: number }) {
@@ -110,7 +111,6 @@ export default function MovieDetails() {
     try {
       setLoading(true);
       setError(null);
-      console.log(`Fetching data for movie ${id}...`);
 
       const [detailsRes, castRes, similarRes, providersRes, videosRes] = await Promise.all([
         fetch(`${BASE_URL}/${id}`),
@@ -131,8 +131,6 @@ export default function MovieDetails() {
       const similarData = await similarRes.json();
       const providersData = await providersRes.json();
       const videosData = await videosRes.json();
-
-      console.log("✅ All data fetched successfully");
 
       setMovie(detailsData);
       setCast(castData.cast?.slice(0, 5) || []);
@@ -157,10 +155,10 @@ export default function MovieDetails() {
 
   const fetchReviews = async (id: string) => {
     try {
-      const res = await fetch(`${REVIEWS_BASE_URL}/${id}`);
+      const res = await fetch(`${REVIEWS_BASE_URL}?movieId=${id}`);
       if (res.ok) {
         const data = await res.json();
-        setReviews(data);
+        setReviews(data.reviews || []);
       }
     } catch (error) {
       console.error("❌ Error fetching reviews:", error);
@@ -185,16 +183,13 @@ export default function MovieDetails() {
 
     setSubmittingReview(true);
     try {
-      console.log("📤 Enviando reseña:", {
-        movieId: Number(movieId),
-        userId: user.id,
-        rating: userRating,
-        comment: userComment,
-      });
-
+      const token = await AsyncStorage.getItem("token");
       const res = await fetch(`${REVIEWS_BASE_URL}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : "",
+        },
         body: JSON.stringify({
           movieId: Number(movieId),
           userId: user.id,
@@ -204,7 +199,6 @@ export default function MovieDetails() {
       });
 
       const responseData = await res.json();
-      console.log("📩 Respuesta del servidor:", { ok: res.ok, status: res.status, data: responseData });
 
       if (res.ok) {
         Alert.alert("Éxito", "Tu reseña se guardó correctamente");
@@ -215,7 +209,7 @@ export default function MovieDetails() {
         Alert.alert("Error", responseData.error || "No se pudo guardar la reseña");
       }
     } catch (error) {
-      console.error("❌ Error enviando reseña:", error);
+      console.error("Error enviando reseña:", error);
       Alert.alert("Error", "Ocurrió un error al guardar la reseña");
     } finally {
       setSubmittingReview(false);
@@ -402,7 +396,7 @@ export default function MovieDetails() {
               <Image 
                 source={
                   review.user?.profileImage?.url
-                    ? { uri: `http://192.168.0.187:3000${review.user.profileImage.url}` }
+                    ? { uri: `http://192.168.0.121:3000${review.user.profileImage.url}` }
                     : Images.profilePlaceholder
                 }
                 style={styles.userAvatarLarge}
