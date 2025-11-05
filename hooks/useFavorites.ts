@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
-const API_URL = "http://192.168.0.121:3000";
+const API_URL = "http://172.29.135.101:3000";
 
 export interface FavMovie {
   id: string;
@@ -16,7 +16,6 @@ export function useFavorites() {
   const [favs, setFavs] = useState<FavMovie[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Cargar favoritos del backend al iniciar
   const loadFavoritesFromBackend = useCallback(async () => {
     if (!user) {
       setFavs([]);
@@ -34,7 +33,6 @@ export function useFavorites() {
 
       if (response.ok) {
         const data = await response.json();
-        // Transformar los datos del backend al formato esperado
         const transformedFavs: FavMovie[] = data.map((fav: any) => ({
           id: fav.movieId || fav.id,
           title: fav.title || fav.movieTitle,
@@ -44,19 +42,16 @@ export function useFavorites() {
         setFavs(transformedFavs);
       } else {
         console.error("Error loading favorites from backend:", response.status);
-        // Fallback a AsyncStorage si el backend falla
         await loadFromLocalStorage();
       }
     } catch (error) {
       console.error("Error fetching favorites:", error);
-      // Fallback a AsyncStorage si hay error de red
       await loadFromLocalStorage();
     } finally {
       setLoading(false);
     }
   }, [user]);
 
-  // Fallback: cargar desde AsyncStorage local
   const loadFromLocalStorage = async () => {
     if (!user) return;
     try {
@@ -73,10 +68,8 @@ export function useFavorites() {
     loadFavoritesFromBackend();
   }, [loadFavoritesFromBackend]);
 
-  // Verificar si una película es favorita
   const isFavorite = (id: string) => favs.some((f) => f.id === id);
 
-  // Agregar o quitar favorito
   const toggleFavorite = async (item: FavMovie) => {
     if (!user) {
       console.warn("User must be logged in to add favorites");
@@ -88,7 +81,6 @@ export function useFavorites() {
       ? favs.filter((f) => f.id !== item.id)
       : [item, ...favs];
 
-    // Actualizar estado de forma optimista
     setFavs(optimisticFavs);
 
     try {
@@ -137,13 +129,10 @@ export function useFavorites() {
         }
       }
 
-      // Guardar también en AsyncStorage como backup
       await AsyncStorage.setItem(`favs:${user.id}`, JSON.stringify(optimisticFavs));
     } catch (error) {
       console.error("Error toggling favorite:", error);
-      // Revertir cambio optimista si falla
       setFavs(favs);
-      // Mantener cambio local aunque falle el backend
       try {
         await AsyncStorage.setItem(`favs:${user.id}`, JSON.stringify(optimisticFavs));
       } catch (storageError) {

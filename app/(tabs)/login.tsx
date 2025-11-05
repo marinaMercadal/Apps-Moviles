@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -28,7 +28,7 @@ export default function LoginScreen() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState(""); 
-  const [name, setName] = useState("");         // register (opcional)
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");   
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +46,6 @@ export default function LoginScreen() {
         setIsLoading(false);
       }
     } else {
-      // register
       if (!email || !username || !password) {
         return Alert.alert("Error", "Email, usuario y contraseña son obligatorios.");
       }
@@ -104,7 +103,6 @@ export default function LoginScreen() {
         </ImageBackground>
 
         <Animated.View style={[styles.loginBox, { transform: [{ translateY }] }]}>
-          {/* Toggle Login / Register */}
           <View style={styles.toggleRow}>
             <TouchableOpacity
               style={[styles.toggleBtn, mode === "login" && styles.toggleActive]}
@@ -127,7 +125,6 @@ export default function LoginScreen() {
             {mode === "login" ? "Ingresa sesión para continuar" : "Completá tus datos para registrarte"}
           </Text>
 
-          {/* Email */}
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={20} color="#8c8c8c" style={styles.icon} />
             <TextInput
@@ -141,7 +138,6 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Campos extra (register) */}
           {mode === "register" && (
             <>
               <View style={styles.inputContainer}>
@@ -168,7 +164,6 @@ export default function LoginScreen() {
             </>
           )}
 
-          {/* Password */}
           <View style={styles.inputContainer}>
             <Ionicons name="lock-closed-outline" size={20} color="#8c8c8c" style={styles.icon} />
             <TextInput
@@ -181,7 +176,6 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Confirmación (register) */}
           {mode === "register" && (
             <View style={styles.inputContainer}>
               <Ionicons name="lock-closed" size={20} color="#8c8c8c" style={styles.icon} />

@@ -2,20 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { Images } from '../../assets/images';
 import { useAuth } from '../../context/AuthContext';
 
-const API_URL = 'http://192.168.0.121:3000';
-const API_ORIGIN = 'http://192.168.0.121:3000';
+const API_URL = 'http://172.29.135.101:3000';
+const API_ORIGIN = 'http://172.29.135.101:3000';
 
 interface Movie{
   id:string;
@@ -55,14 +55,12 @@ const ProfileScreen=()=>{
       
       const token = await getToken();
       
-      // Fetch favorites from the correct endpoint
       const favoritesRes = await fetch(`${API_URL}/api/favorites`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      // Fetch user's reviews
       const reviewsRes = await fetch(`${API_URL}/api/reviews/my-reviews`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -72,7 +70,6 @@ const ProfileScreen=()=>{
       let favorites: Movie[] = [];
       if (favoritesRes.ok) {
         const favData = await favoritesRes.json();
-        // Convert favorites to Movie format
         favorites = (Array.isArray(favData) ? favData : []).map((fav: any) => ({
           id: fav.movieId,
           title: fav.title,
@@ -81,7 +78,6 @@ const ProfileScreen=()=>{
         }));
       }
 
-      // Get reviewed movies (películas con reseñas)
       let reviewedMovies: Movie[] = [];
       let reviews: any[] = [];
       if (reviewsRes.ok) {
@@ -205,7 +201,6 @@ const ProfileScreen=()=>{
     return stars;
   };
 
-  // Helper para armar URL absoluta del avatar
   const full = (url?: string | null) =>
     url ? (url.startsWith("http") ? url : `${API_ORIGIN}${url}`) : undefined;
 

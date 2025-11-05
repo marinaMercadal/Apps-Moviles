@@ -4,14 +4,14 @@ import { ActivityIndicator, Animated, FlatList, Image, Pressable, ScrollView, St
 import { Images } from "../../assets/images";
 
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
-const API_URL = "http://192.168.0.121:3000";
+const API_URL = "http://172.29.135.101:3000";
 
 interface Review {
   id: number;
   userId: number;
   movieId: string;
   rating: number;
-  comment: string;  // El backend devuelve 'comment', no 'content'
+  comment: string;
   createdAt: string;
   user?: {
     name: string;

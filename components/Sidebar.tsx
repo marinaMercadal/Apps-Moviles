@@ -17,10 +17,8 @@ import { useAuth } from "../context/AuthContext";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SIDEBAR_WIDTH = 280;
 
-// Usa el mismo origin que en Settings
-const API_ORIGIN = "http://192.168.0.121:3000";
+const API_ORIGIN = "http://172.29.135.101:3000";
 
-// Helper para armar URL absoluta
 const full = (url?: string | null) =>
   url ? (url.startsWith("http") ? url : `${API_ORIGIN}${url}`) : undefined;
 
@@ -35,7 +33,6 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
   const pathname = usePathname();
   const { logout, user } = useAuth();
 
-  // URI del avatar actual (prioriza profileImage.url; fallback a avatarUrl)
   const avatarUri = useMemo(
     () => full(user?.profileImage?.url ?? user?.avatarUrl ?? null),
     [user?.profileImage?.url, user?.avatarUrl]
@@ -83,7 +80,6 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
   const handleItemPress = (id: string) => {
     if (id === "home") router.push("/");
     else if (id === "films") router.push("/sidebar/films");
-    // else if (id === "watchlist") router.push("/watchlist");
     else if (id === "likes") router.push("../favorites");
     else if (id === "settings") router.push("../settings");
     handleClose();

@@ -11,7 +11,6 @@ export default function FavoritesScreen() {
   const router = useRouter();
   const { favs: items, toggleFavorite, loading, refresh } = useFavorites();
 
-  // Recargar favoritos cuando la pantalla obtiene foco
   useFocusEffect(
     React.useCallback(() => {
       refresh();

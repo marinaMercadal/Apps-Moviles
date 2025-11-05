@@ -4,18 +4,17 @@ import { useEffect, useMemo, useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 
-const API_ORIGIN = "http://192.168.0.121:3000"; // <- mismo origin que usa tu Settings
+const API_ORIGIN = "http://172.29.135.101:3000"; 
 
 export default function TabsLayout() {
   const { user } = useAuth();
   const router = useRouter();
   const [showTabs, setShowTabs] = useState(false);
 
-  // Helper para armar URL absoluta
   const full = (url?: string | null) =>
     url ? (url.startsWith("http") ? url : `${API_ORIGIN}${url}`) : undefined;
 
-  // URI actual del avatar (usa profileImage.url o, de fallback, avatarUrl)
+
   const avatarUri = useMemo(
     () => full(user?.profileImage?.url ?? user?.avatarUrl ?? null),
     [user?.profileImage?.url, user?.avatarUrl]
@@ -32,7 +31,6 @@ export default function TabsLayout() {
     else router.push("/login");
   };
 
-  // Cambiamos la key si cambia el avatar para forzar re-render del TabBar
   const tabsKey = `${user ? "logged" : "guest"}-${user?.profileImageId || user?.avatarUrl || "na"}`;
 
   if (!showTabs) return null;
@@ -61,7 +59,6 @@ export default function TabsLayout() {
           tabBarShowLabel: false,
         }}
       >
-        {/* 🔍 Search */}
         <Tabs.Screen
           name="search"
           options={{
@@ -71,7 +68,7 @@ export default function TabsLayout() {
           }}
         />
 
-        {/* 🏠 Home */}
+
         <Tabs.Screen
           name="index"
           options={{
@@ -80,8 +77,6 @@ export default function TabsLayout() {
             ),
           }}
         />
-
-        {/* ❤️ Favorites — solo si está logueado */}
         {user && (
           <Tabs.Screen
             name="favorites"
@@ -92,8 +87,6 @@ export default function TabsLayout() {
             }}
           />
         )}
-
-        {/* 👤 Profile/Login -- si hay avatar, mostrar imagen redonda */}
         <Tabs.Screen
           name="login"
           options={{

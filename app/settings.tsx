@@ -13,10 +13,7 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
-//maru:192.168.0.121
-//martu: http://192.168.1.40:3000/api
-
-const API_URL = "http://192.168.0.121:3000/api";
+const API_URL = "http://172.29.135.101:3000/api";
 const API_ORIGIN = API_URL.replace(/\/api$/, "");
 
 type AvatarItem = { id: number; url: string; label?: string };

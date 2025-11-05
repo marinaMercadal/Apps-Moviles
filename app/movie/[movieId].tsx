@@ -19,8 +19,8 @@ import {
 import { Images } from "../../assets/images";
 import { useAuth } from "../../context/AuthContext";
 
-const BASE_URL = "http://192.168.0.121:3000/api/movies";
-const REVIEWS_BASE_URL = "http://192.168.0.121:3000/api/reviews";
+const BASE_URL = "http://172.29.135.101:3000/api/movies";
+const REVIEWS_BASE_URL = "http://172.29.135.101:3000/api/reviews";
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 
 function StarRating({ rating }: { rating: number }) {
@@ -77,15 +77,11 @@ export default function MovieDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estado para reseñas
   const [reviews, setReviews] = useState<any[]>([]);
   const [userRating, setUserRating] = useState(0);
   const [userComment, setUserComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-
-  // Cargar userId de AsyncStorage
-
 
   useEffect(() => {
     if (movieId) {
@@ -345,7 +341,6 @@ export default function MovieDetails() {
 
       <Text style={styles.sectionTitle}>Reseñas</Text>
 
-      {/* Formulario para agregar reseña propia */}
       {user && (
         <View style={[styles.addReviewContainer, keyboardVisible && styles.addReviewContainerShift]}>
           <Text style={styles.addReviewTitle}>Tu reseña</Text>
@@ -387,8 +382,6 @@ export default function MovieDetails() {
       )}
 
       <View style={styles.divider} />
-
-      {/* Reseñas existentes */}
       <View style={styles.reviewsSection}>
         {reviews.length > 0 ? (
           reviews.map((review, idx) => (
@@ -396,7 +389,7 @@ export default function MovieDetails() {
               <Image 
                 source={
                   review.user?.profileImage?.url
-                    ? { uri: `http://192.168.0.121:3000${review.user.profileImage.url}` }
+                    ? { uri: `http://172.29.135.101:3000${review.user.profileImage.url}` }
                     : Images.profilePlaceholder
                 }
                 style={styles.userAvatarLarge}

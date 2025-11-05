@@ -20,7 +20,7 @@ import { useFavorites } from "../hooks/useFavorites";
 
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 const PLACEHOLDER = "https://via.placeholder.com/120x180?text=Sin+Imagen";
-const API_URL = "http://192.168.0.121:3000";
+const API_URL = "http://172.29.135.101:3000";
 
 export default function BuscarScreen() {
   const router = useRouter();
