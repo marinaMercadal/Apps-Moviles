@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Images } from "../../assets/images";
 import { API_ORIGIN, API_URL } from "../../config";
 
@@ -159,16 +159,20 @@ function ReviewCard({ review }: ReviewCardProps) {
 
   return (
     <Pressable style={styles.reviewCard} onPress={handlePress}>
-      <Image 
-        source={avatarUri ? { uri: avatarUri } : Images.profilePlaceholder} 
-        style={styles.userAvatarLarge} 
-      />
+      <TouchableOpacity onPress={() => router.push(`/profile/${review.userId}`)}>
+        <Image
+          source={avatarUri ? { uri: avatarUri } : Images.profilePlaceholder}
+          style={styles.userAvatarLarge}
+        />
+      </TouchableOpacity>
       <View style={styles.reviewContent}>
         <Text style={styles.movieTitleReview}>{review.movie?.title || 'Película'}</Text>
-        <Text style={styles.reviewBy}>
-          <Text style={styles.reviewByGray}>Reseña de </Text>
-          <Text style={styles.reviewByUser}>{review.user?.name || 'Usuario'}</Text>
-        </Text>
+        <TouchableOpacity onPress={() => router.push(`/profile/${review.userId}`)}>
+          <Text style={styles.reviewBy}>
+            <Text style={styles.reviewByGray}>Reseña de </Text>
+            <Text style={styles.reviewByUser}>{review.user?.name || 'Usuario'}</Text>
+          </Text>
+        </TouchableOpacity>
         <StarRating rating={review.rating} />
         <Text style={styles.comment} numberOfLines={3}>{review.comment}</Text>
       </View>

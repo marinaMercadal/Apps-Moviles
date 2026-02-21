@@ -387,20 +387,24 @@ export default function MovieDetails() {
         {reviews.length > 0 ? (
           reviews.map((review, idx) => (
             <View key={idx} style={styles.reviewCard}>
-              <Image 
-                source={
-                  review.user?.profileImage?.url
-                    ? { uri: `${API_ORIGIN}${review.user.profileImage.url}` }
-                    : Images.profilePlaceholder
-                }
-                style={styles.userAvatarLarge}
-              />
+              <TouchableOpacity onPress={() => { if(review.user?.id) router.push(`/profile/${review.user.id}`); }}>
+                <Image
+                  source={
+                    review.user?.profileImage?.url
+                      ? { uri: `${API_ORIGIN}${review.user.profileImage.url}` }
+                      : Images.profilePlaceholder
+                  }
+                  style={styles.userAvatarLarge}
+                />
+              </TouchableOpacity>
               <View style={styles.reviewContent}>
                 <Text style={styles.movieTitleReview}>{movie.title}</Text>
-                <Text style={styles.reviewBy}>
-                  <Text style={styles.reviewByGray}>Reseña de </Text>
-                  <Text style={styles.reviewByUser}>{review.user?.name || "Usuario"}</Text>
-                </Text>
+                <TouchableOpacity onPress={() => { if(review.user?.id) router.push(`/profile/${review.user.id}`); }}>
+                  <Text style={styles.reviewBy}>
+                    <Text style={styles.reviewByGray}>Reseña de </Text>
+                    <Text style={styles.reviewByUser}>{review.user?.name || "Usuario"}</Text>
+                  </Text>
+                </TouchableOpacity>
                 <StarRating rating={review.rating} />
                 <Text style={styles.comment}>{review.comment}</Text>
               </View>
