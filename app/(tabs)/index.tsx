@@ -2,9 +2,9 @@ import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Images } from "../../assets/images";
+import { API_ORIGIN, API_URL } from "../../config";
 
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
-const API_URL = "http://172.29.135.101:3000";
 
 interface Review {
   id: number;
@@ -40,7 +40,7 @@ export default function HomeScreen() {
 
   const fetchRecentReviews = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/reviews/recent`);
+      const res = await fetch(`${API_URL}/reviews/recent`);
       
       if (res.ok) {
         const data = await res.json();
@@ -56,7 +56,7 @@ export default function HomeScreen() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_URL}/api/movies/popular`);
+      const res = await fetch(`${API_URL}/movies/popular`);
 
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -145,8 +145,8 @@ type ReviewCardProps = {
 
 function ReviewCard({ review }: ReviewCardProps) {
   const router = useRouter();
-  const avatarUri = review.user?.profileImage?.url 
-    ? `${API_URL}${review.user.profileImage.url}`
+  const avatarUri = review.user?.profileImage?.url
+    ? `${API_ORIGIN}${review.user.profileImage.url}`
     : review.user?.avatarUrl || null;
   
   const posterUri = review.movie?.poster_path

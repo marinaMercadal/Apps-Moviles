@@ -18,9 +18,10 @@ import {
 } from "react-native";
 import { Images } from "../../assets/images";
 import { useAuth } from "../../context/AuthContext";
+import { API_ORIGIN, API_URL } from "../../config";
 
-const BASE_URL = "http://172.29.135.101:3000/api/movies";
-const REVIEWS_BASE_URL = "http://172.29.135.101:3000/api/reviews";
+const BASE_URL = `${API_URL}/movies`;
+const REVIEWS_BASE_URL = `${API_URL}/reviews`;
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 
 function StarRating({ rating }: { rating: number }) {
@@ -389,7 +390,7 @@ export default function MovieDetails() {
               <Image 
                 source={
                   review.user?.profileImage?.url
-                    ? { uri: `http://172.29.135.101:3000${review.user.profileImage.url}` }
+                    ? { uri: `${API_ORIGIN}${review.user.profileImage.url}` }
                     : Images.profilePlaceholder
                 }
                 style={styles.userAvatarLarge}

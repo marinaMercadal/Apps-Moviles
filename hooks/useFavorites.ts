@@ -1,8 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-
-const API_URL = "http://172.29.135.101:3000";
+import { API_URL } from "../config";
 
 export interface FavMovie {
   id: string;
@@ -25,7 +24,7 @@ export function useFavorites() {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem("token");
-      const response = await fetch(`${API_URL}/api/favorites`, {
+      const response = await fetch(`${API_URL}/favorites`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -93,7 +92,7 @@ export function useFavorites() {
       }
 
       if (exists) {
-        const response = await fetch(`${API_URL}/api/favorites/${item.id}`, {
+        const response = await fetch(`${API_URL}/favorites/${item.id}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -113,7 +112,7 @@ export function useFavorites() {
           releaseDate: item.releaseYear ? `${item.releaseYear}-01-01` : null,
         };
 
-        const response = await fetch(`${API_URL}/api/favorites`, {
+        const response = await fetch(`${API_URL}/favorites`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

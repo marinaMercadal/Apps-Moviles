@@ -13,11 +13,10 @@ import {
     View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { API_ORIGIN } from "../config";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SIDEBAR_WIDTH = 280;
-
-const API_ORIGIN = "http://172.29.135.101:3000";
 
 const full = (url?: string | null) =>
   url ? (url.startsWith("http") ? url : `${API_ORIGIN}${url}`) : undefined;

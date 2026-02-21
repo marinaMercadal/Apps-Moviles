@@ -3,8 +3,8 @@ import { Tabs, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { useAuth } from "../../context/AuthContext";
+import { API_ORIGIN } from "../../config";
 
-const API_ORIGIN = "http://172.29.135.101:3000"; 
 
 export default function TabsLayout() {
   const { user } = useAuth();

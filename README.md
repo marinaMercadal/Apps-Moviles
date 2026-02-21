@@ -1,50 +1,74 @@
-# Welcome to your Expo app 👋
+# VEOVEO — Grupo 6
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App de reseñas de peliculas hecha con React Native y Expo
+Sirve para descubrir peliculas, escribir reseñas, guardar a favoritos y manejar tu perfil
 
-## Get started
+=================================
 
-1. Install dependencies
+## Antes de empezar
 
-   ```bash
-   npm install
-   ```
+Necesitás tener:
+	•	Node 18 o más nuevo
+	•	npm
+	•	Expo CLI (npm install -g expo-cli)
+	•	La app Expo Go instalada en tu celular
+	•	El backend levantado y corriendo en tu red
 
-2. Start the app
 
-   ```bash
-   npx expo start
-   ```
+=================================
 
-In the output, you'll find options to open the app in a
+## Cómo configurarlo
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 1. Instalar dependencias
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+npm install
 
-## Get a fresh project
+### 2. Poner la IP del backend
 
-When you're ready, run:
+En el archivo config.ts (esta en la raiz). cambia la IP por la de tu computadora:
 
-```bash
-npm run reset-project
-```
+export const API_ORIGIN = "http://TU_IP_LOCAL:3000";
+export const API_URL = `${API_ORIGIN}/api`;
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-## Learn more
+Ejemplo: si tu backend corre en 192.168.1.50, entonces:
+"http://192.168.1.50:3000"
 
-To learn more about developing your project with Expo, look at the following resources:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Para ver tu IP:
+	•	Mac / Linux → ifconfig | grep "inet "
+	•	Windows → ipconfig
 
-## Join the community
+El celular y la compu tienen que estar conectados al mismo wifi
 
-Join our community of developers creating universal apps.
+=================================
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Como correr la app
+
+npx expo start
+
+Se abre el servidor de Expo
+Despues abris Expo Go en el celular y escaneas el QR que aparece en la terminal y listo
+
+
+=================================
+
+## Que tiene la app
+
+	•	Home → Películas populares del mes + reseñas recientes
+	•	Buscar → Buscador con resultados en grilla y botón para agregar a favoritos
+	•	Detalle → Poster, descripción, elenco, dónde verla, trailer y reseñas
+	•	Favoritos → Lista de pelis guardadas (requiere login)
+	•	Perfil → Estadísticas, favoritas y reseñas del usuario
+	•	Ajustes → Cambiar nombre y avatar
+	•	Login / Registro → Email y contraseña
+
+---
+
+## Tecnologias que usamos
+
+	•	Expo / React Native → para la app
+	•	expo-router → navegación por archivos
+	•	AsyncStorage → guardar el token
+	•	Ionicons → íconos
+	•	React Native Reanimated → animaciones

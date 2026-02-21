@@ -13,9 +13,7 @@ import {
 } from 'react-native';
 import { Images } from '../../assets/images';
 import { useAuth } from '../../context/AuthContext';
-
-const API_URL = 'http://172.29.135.101:3000';
-const API_ORIGIN = 'http://172.29.135.101:3000';
+import { API_ORIGIN, API_URL } from '../../config';
 
 interface Movie{
   id:string;
@@ -55,13 +53,13 @@ const ProfileScreen=()=>{
       
       const token = await getToken();
       
-      const favoritesRes = await fetch(`${API_URL}/api/favorites`, {
+      const favoritesRes = await fetch(`${API_URL}/favorites`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      const reviewsRes = await fetch(`${API_URL}/api/reviews/my-reviews`, {
+      const reviewsRes = await fetch(`${API_URL}/reviews/my-reviews`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -87,7 +85,7 @@ const ProfileScreen=()=>{
         const movieDetailsPromises = reviews.map(async (review: any) => {
           try {
             const tmdbRes = await fetch(
-              `${API_URL}/api/movies/${review.movieId}`
+              `${API_URL}/movies/${review.movieId}`
             );
             if (tmdbRes.ok) {
               const movieData = await tmdbRes.json();
