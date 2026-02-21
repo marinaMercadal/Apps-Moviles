@@ -79,6 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose }) => {
   const handleItemPress = (id: string) => {
     if (id === "home") router.push("/");
     else if (id === "films") router.push("/sidebar/films");
+    else if (id === "watchlist") router.push("/lists");
     else if (id === "likes") router.push("../favorites");
     else if (id === "settings") router.push("../settings");
     handleClose();

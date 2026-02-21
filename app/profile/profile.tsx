@@ -53,17 +53,11 @@ const ProfileScreen=()=>{
       
       const token = await getToken();
       
-      const favoritesRes = await fetch(`${API_URL}/favorites`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      const reviewsRes = await fetch(`${API_URL}/reviews/my-reviews`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const [favoritesRes, reviewsRes, listsRes] = await Promise.all([
+        fetch(`${API_URL}/favorites`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_URL}/reviews/my-reviews`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_URL}/lists`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      ]);
       
       let favorites: Movie[] = [];
       if (favoritesRes.ok) {
@@ -107,10 +101,16 @@ const ProfileScreen=()=>{
         reviewedMovies = moviesData.filter((movie) => movie !== null) as Movie[];
       }
 
+      let listsCount = 0;
+      if (listsRes.ok) {
+        const listsData = await listsRes.json();
+        listsCount = Array.isArray(listsData) ? listsData.length : 0;
+      }
+
       const stats = {
         totalMovies: favorites.length,
         moviesThisYear: 0,
-        lists: 0,
+        lists: listsCount,
         reviews: reviews.length
       };
 

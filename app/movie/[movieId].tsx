@@ -9,6 +9,7 @@ import {
   Image,
   Keyboard,
   Linking,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -83,6 +84,10 @@ export default function MovieDetails() {
   const [userComment, setUserComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  const [listsModalVisible, setListsModalVisible] = useState(false);
+  const [userLists, setUserLists] = useState<any[]>([]);
+  const [addingToList, setAddingToList] = useState(false);
 
   useEffect(() => {
     if (movieId) {
@@ -213,6 +218,49 @@ export default function MovieDetails() {
     }
   };
 
+  const fetchUserLists = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const res = await fetch(`${API_URL}/lists`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserLists(data);
+      }
+    } catch (error) {
+      console.error("Error fetching lists:", error);
+    }
+  };
+
+  const addToList = async (listId: number) => {
+    if (!movie) return;
+    try {
+      setAddingToList(true);
+      const token = await AsyncStorage.getItem("token");
+      const res = await fetch(`${API_URL}/lists/${listId}/movies`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          movieId: String(movie.id),
+          title: movie.title,
+          posterPath: movie.poster_path,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Alert.alert("¡Listo!", "Película agregada a la lista");
+      } else {
+        Alert.alert("Aviso", data.message || "No se pudo agregar");
+      }
+    } catch (error) {
+      console.error("Error adding to list:", error);
+    } finally {
+      setAddingToList(false);
+      setListsModalVisible(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -337,6 +385,51 @@ export default function MovieDetails() {
           </TouchableOpacity>
         )}
       />
+
+      {user && (
+        <TouchableOpacity
+          style={styles.addToListButton}
+          onPress={() => { fetchUserLists(); setListsModalVisible(true); }}
+        >
+          <Ionicons name="list-outline" size={18} color="#1B1935" />
+          <Text style={styles.addToListButtonText}>Agregar a lista</Text>
+        </TouchableOpacity>
+      )}
+
+      <Modal
+        transparent
+        visible={listsModalVisible}
+        animationType="fade"
+        onRequestClose={() => setListsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Agregar a lista</Text>
+            {userLists.length === 0 ? (
+              <Text style={styles.modalEmpty}>No tenés listas. Creá una desde "Mis Listas".</Text>
+            ) : (
+              userLists.map((list: any) => (
+                <TouchableOpacity
+                  key={list.id}
+                  style={styles.modalListItem}
+                  onPress={() => addToList(list.id)}
+                  disabled={addingToList}
+                >
+                  <Ionicons name="film-outline" size={18} color="#F2A8A8" />
+                  <Text style={styles.modalListName}>{list.name}</Text>
+                  <Text style={styles.modalListCount}>{list._count.movies}</Text>
+                </TouchableOpacity>
+              ))
+            )}
+            <TouchableOpacity
+              style={styles.modalCancelButton}
+              onPress={() => setListsModalVisible(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <View style={styles.divider} />
 
@@ -731,5 +824,76 @@ const styles = StyleSheet.create({
   comment: {
     color: "#DDD",
     fontSize: 14,
+  },
+  addToListButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F2A8A8",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginHorizontal: 0,
+    marginBottom: 16,
+    gap: 8,
+  },
+  addToListButtonText: {
+    color: "#1B1935",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#1A1833",
+    borderRadius: 16,
+    padding: 24,
+    width: "85%",
+    maxWidth: 340,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#F2A8A8",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  modalEmpty: {
+    color: "#aaa",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  modalListItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: "rgba(242,168,168,0.1)",
+    marginBottom: 8,
+    gap: 10,
+  },
+  modalListName: {
+    flex: 1,
+    color: "#fff",
+    fontSize: 15,
+  },
+  modalListCount: {
+    color: "#aaa",
+    fontSize: 13,
+  },
+  modalCancelButton: {
+    marginTop: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  modalCancelText: {
+    color: "#aaa",
+    fontSize: 15,
   },
 });
