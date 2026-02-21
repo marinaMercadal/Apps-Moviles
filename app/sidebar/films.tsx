@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Modal,
@@ -10,92 +12,125 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Images } from "../../assets/images";
+import { API_URL } from "../../config";
 
-interface Movie{
-  id:string;
-  title:string;
-  poster:any;
+const IMG_URL = "https://image.tmdb.org/t/p/w500";
+
+interface Movie {
+  id: number;
+  title: string;
+  poster_path: string;
 }
 
-const moviesData={
-  masRecientes:[
-    {id:"1",title:"Materialists",poster:Images.materialists},
-    {id:"2",title:"Highest 2 Lowest",poster:Images.highestLowest},
-    {id:"3",title:"Hot Milk",poster:Images.hotMilk},
-    {id:"4",title:"The Wrong Paris",poster:Images.wrongParis},
-    {id:"5",title:"Weapons",poster:Images.weapons},
-    {id:"6",title:"Gatillero",poster:Images.gatillero},
-    {id:"7",title:"Ballerina",poster:Images.ballerina},
-    {id:"8",title:"Death of a Unicorn",poster:Images.deathOfUnicorn},
-    {id:"28",title:"Enemies",poster:Images.enemies}
-  ],
-  masBuscadas:[
-    {id:"9",title:"French Lover",poster:Images.frenchLover},
-    {id:"10",title:"I Know What You Did Last Summer",poster:Images.iKnowWhatYouDidLastSummer},
-    {id:"11",title:"Enemies",poster:Images.enemies},
-    {id:"12",title:"Lilo y Stitch",poster:Images.liloYStitch},
-    {id:"13",title:"Los Sobrevivientes",poster:Images.homoArgentum},
-    {id:"14",title:"El Bosque",poster:Images.viernesDeLocos},
-  ],
-  mejoresReviews:[
-    {id:"15",title:"French Lover",poster:Images.frenchLover},
-    {id:"16",title:"Death of a Unicorn",poster:Images.deathOfUnicorn},
-    {id:"17",title:"Materialists",poster:Images.materialists},
-    {id:"18",title:"Hot Milk",poster:Images.hotMilk},
-    {id:"19",title:"Ballerina",poster:Images.ballerina},
-  ],
-  comedia:[
-    {id:"20",title:"Lilo y Stitch",poster:Images.liloYStitch},
-    {id:"21",title:"Viernes De Locos",poster:Images.viernesDeLocos},
-    {id:"22",title:"The Wrong Paris",poster:Images.wrongParis},
-    {id:"23",title:"Homo Argentum",poster:Images.homoArgentum},
-  ],
-  drama:[
-    {id:"24",title:"I Know What You Did Last Summer",poster:Images.iKnowWhatYouDidLastSummer},
-    {id:"25",title:"Enemies",poster:Images.enemies},
-    {id:"26",title:"Weapons",poster:Images.weapons},
-    {id:"27",title:"Gatillero",poster:Images.gatillero},
-  ],
-};
+interface CategoriesData {
+  masRecientes: Movie[];
+  masBuscadas: Movie[];
+  mejoresReviews: Movie[];
+  comedia: Movie[];
+  drama: Movie[];
+}
 
-export default function PeliculasScreen(){
-  const [filterModalVisible,setFilterModalVisible]=useState(false);
-  const [selectedFilter,setSelectedFilter]=useState<string|null>(null);
-  
-  const filterOptions=[
-    {key:"masRecientes",label:"Más recientes"},
-    {key:"masBuscadas",label:"Más buscadas"},
-    {key:"mejoresReviews",label:"Mejores Reviews"},
-    {key:"comedia",label:"Comedia"},
-    {key:"drama",label:"Drama"},
+export default function PeliculasScreen() {
+  const router = useRouter();
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [moviesData, setMoviesData] = useState<CategoriesData>({
+    masRecientes: [],
+    masBuscadas: [],
+    mejoresReviews: [],
+    comedia: [],
+    drama: [],
+  });
+
+  useEffect(() => {
+    fetchAllCategories();
+  }, []);
+
+  const fetchAllCategories = async () => {
+    setLoading(true);
+    try {
+      const [popular, upcoming, topRated, comedy, drama] = await Promise.all([
+        fetch(`${API_URL}/movies/popular`).then((r) => r.json()),
+        fetch(`${API_URL}/movies/upcoming`).then((r) => r.json()),
+        fetch(`${API_URL}/movies/toprated`).then((r) => r.json()),
+        fetch(`${API_URL}/movies/genre/comedy`).then((r) => r.json()),
+        fetch(`${API_URL}/movies/genre/drama`).then((r) => r.json()),
+      ]);
+
+      setMoviesData({
+        masRecientes: popular.results || [],
+        masBuscadas: upcoming.results || [],
+        mejoresReviews: topRated.results || [],
+        comedia: comedy.results || [],
+        drama: drama.results || [],
+      });
+    } catch (error) {
+      console.error("Error fetching movies:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterOptions = [
+    { key: "masRecientes", label: "Más recientes" },
+    { key: "masBuscadas", label: "Más buscadas" },
+    { key: "mejoresReviews", label: "Mejores Reviews" },
+    { key: "comedia", label: "Comedia" },
+    { key: "drama", label: "Drama" },
   ];
 
-  const getFilteredMovies=()=>{
-    if(!selectedFilter) return null;
+  const getFilteredMovies = () => {
+    if (!selectedFilter) return null;
     return moviesData[selectedFilter as keyof typeof moviesData];
   };
 
-  const renderMovieItem=({item}:{item:Movie})=>(
-    <TouchableOpacity style={styles.movieItem}>
-      <Image source={item.poster} style={styles.moviePoster}/>
-      <Text style={styles.movieTitle}>{item.title}</Text>
+  const handleMoviePress = (id: number) => {
+    router.push(`/movie/${id}`);
+  };
+
+  const renderMovieItem = ({ item }: { item: Movie }) => (
+    <TouchableOpacity
+      style={styles.movieItem}
+      onPress={() => handleMoviePress(item.id)}
+    >
+      {item.poster_path ? (
+        <Image
+          source={{ uri: IMG_URL + item.poster_path }}
+          style={styles.moviePoster}
+        />
+      ) : (
+        <View style={[styles.moviePoster, styles.placeholderPoster]} />
+      )}
+      <Text style={styles.movieTitle} numberOfLines={2}>
+        {item.title}
+      </Text>
     </TouchableOpacity>
   );
 
-  const renderGridMovieItem=({item}:{item:Movie})=>(
-    <TouchableOpacity style={styles.gridMovieItem}>
-      <Image source={item.poster} style={styles.gridMoviePoster}/>
+  const renderGridMovieItem = ({ item }: { item: Movie }) => (
+    <TouchableOpacity
+      style={styles.gridMovieItem}
+      onPress={() => handleMoviePress(item.id)}
+    >
+      {item.poster_path ? (
+        <Image
+          source={{ uri: IMG_URL + item.poster_path }}
+          style={styles.gridMoviePoster}
+        />
+      ) : (
+        <View style={[styles.gridMoviePoster, styles.placeholderPoster]} />
+      )}
     </TouchableOpacity>
   );
 
-  const renderCategory=(title:string,movies:Movie[])=>(
+  const renderCategory = (title: string, movies: Movie[]) => (
     <View style={styles.categoryContainer} key={title}>
       <Text style={styles.categoryTitle}>{title}</Text>
       <FlatList
         data={movies}
         renderItem={renderMovieItem}
-        keyExtractor={(item)=>item.id}
+        keyExtractor={(item) => item.id.toString()}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.moviesList}
@@ -103,20 +138,20 @@ export default function PeliculasScreen(){
     </View>
   );
 
-  const renderFilterModal=()=>(
+  const renderFilterModal = () => (
     <Modal
       transparent={true}
       visible={filterModalVisible}
-      onRequestClose={()=>setFilterModalVisible(false)}
+      onRequestClose={() => setFilterModalVisible(false)}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Filtrar por:</Text>
-          {filterOptions.map((option)=>(
+          {filterOptions.map((option) => (
             <TouchableOpacity
               key={option.key}
               style={styles.filterOption}
-              onPress={()=>{
+              onPress={() => {
                 setSelectedFilter(option.key);
                 setFilterModalVisible(false);
               }}
@@ -126,7 +161,7 @@ export default function PeliculasScreen(){
           ))}
           <TouchableOpacity
             style={styles.clearFilterOption}
-            onPress={()=>{
+            onPress={() => {
               setSelectedFilter(null);
               setFilterModalVisible(false);
             }}
@@ -138,43 +173,51 @@ export default function PeliculasScreen(){
     </Modal>
   );
 
-  const filteredMovies=getFilteredMovies();
+  const filteredMovies = getFilteredMovies();
 
-  return(
+  return (
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.titleContainer}>
           <Text style={styles.screenTitle}>Películas</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.filterButton}
-            onPress={()=>setFilterModalVisible(true)}
+            onPress={() => setFilterModalVisible(true)}
           >
-            <Ionicons name="filter" size={24} color="#F2A8A8"/>
+            <Ionicons name="filter" size={24} color="#F2A8A8" />
           </TouchableOpacity>
         </View>
-        
-        {filteredMovies?(
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#F2A8A8" />
+            <Text style={styles.loadingText}>Cargando películas...</Text>
+          </View>
+        ) : filteredMovies ? (
           <View style={styles.gridContainer}>
             <Text style={styles.filterTitle}>
-              {filterOptions.find(f=>f.key===selectedFilter)?.label}
+              {filterOptions.find((f) => f.key === selectedFilter)?.label}
             </Text>
             <FlatList
               data={filteredMovies}
               renderItem={renderGridMovieItem}
-              keyExtractor={(item)=>item.id}
+              keyExtractor={(item) => item.id.toString()}
               numColumns={3}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.gridMoviesList}
               columnWrapperStyle={styles.gridRow}
             />
           </View>
-        ):(
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.categoriesContainer}>
-            {renderCategory("Más recientes:",moviesData.masRecientes)}
-            {renderCategory("Más buscadas:",moviesData.masBuscadas)}
-            {renderCategory("Mejores Reviews:",moviesData.mejoresReviews)}
-            {renderCategory("Comedia:",moviesData.comedia)}
-            {renderCategory("Drama:",moviesData.drama)}
+        ) : (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesContainer}
+          >
+            {renderCategory("Más recientes:", moviesData.masRecientes)}
+            {renderCategory("Más buscadas:", moviesData.masBuscadas)}
+            {renderCategory("Mejores Reviews:", moviesData.mejoresReviews)}
+            {renderCategory("Comedia:", moviesData.comedia)}
+            {renderCategory("Drama:", moviesData.drama)}
           </ScrollView>
         )}
       </View>
@@ -183,132 +226,145 @@ export default function PeliculasScreen(){
   );
 }
 
-const styles=StyleSheet.create({
-  container:{
-    flex:1,
-    backgroundColor:"#1B1935",
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#1B1935",
   },
-  content:{
-    flex:1,
-    paddingHorizontal:20,
-    paddingTop:20,
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
-  categoriesContainer:{
-    paddingBottom:100,
+  categoriesContainer: {
+    paddingBottom: 100,
   },
-  titleContainer:{
-    flexDirection:"row",
-    justifyContent:"space-between",
-    alignItems:"center",
-    marginBottom:30,
+  titleContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 30,
   },
-  screenTitle:{
-    fontSize:32,
-    fontWeight:"bold",
-    color:"#F2A8A8",
-    textAlign:"center",
-    flex:1,
+  screenTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#F2A8A8",
+    textAlign: "center",
+    flex: 1,
   },
-  filterButton:{
-    padding:8,
+  filterButton: {
+    padding: 8,
   },
-  categoryContainer:{
-    marginBottom:30,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  categoryTitle:{
-    fontSize:22,
-    fontWeight:"600",
-    color:"#FFFFFF",
-    marginBottom:15,
-    marginLeft:5,
+  loadingText: {
+    color: "#DDD",
+    marginTop: 10,
+    fontSize: 14,
   },
-  moviesList:{
-    paddingLeft:5,
+  categoryContainer: {
+    marginBottom: 30,
   },
-  movieItem:{
-    marginRight:15,
-    width:120,
+  categoryTitle: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    marginBottom: 15,
+    marginLeft: 5,
   },
-  moviePoster:{
-    width:120,
-    height:180,
-    borderRadius:8,
-    marginBottom:8,
+  moviesList: {
+    paddingLeft: 5,
   },
-  movieTitle:{
-    fontSize:14,
-    color:"#B0B0B0",
-    textAlign:"center",
-    fontWeight:"500",
+  movieItem: {
+    marginRight: 15,
+    width: 120,
   },
-  gridContainer:{
-    flex:1,
+  moviePoster: {
+    width: 120,
+    height: 180,
+    borderRadius: 8,
+    marginBottom: 8,
   },
-  filterTitle:{
-    fontSize:24,
-    fontWeight:"600",
-    color:"#F2A8A8",
-    marginBottom:20,
-    textAlign:"center",
+  placeholderPoster: {
+    backgroundColor: "#2A273F",
   },
-  gridMoviesList:{
-    paddingBottom:20,
+  movieTitle: {
+    fontSize: 14,
+    color: "#B0B0B0",
+    textAlign: "center",
+    fontWeight: "500",
   },
-  gridRow:{
-    justifyContent:"space-between",
-    marginBottom:15,
+  gridContainer: {
+    flex: 1,
   },
-  gridMovieItem:{
-    width:"32%",
-    aspectRatio:2/3,
+  filterTitle: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: "#F2A8A8",
+    marginBottom: 20,
+    textAlign: "center",
   },
-  gridMoviePoster:{
-    width:"100%",
-    height:"100%",
-    borderRadius:8,
+  gridMoviesList: {
+    paddingBottom: 20,
   },
-  modalOverlay:{
-    flex:1,
-    backgroundColor:"rgba(0,0,0,0.5)",
-    justifyContent:"center",
-    alignItems:"center",
+  gridRow: {
+    justifyContent: "space-between",
+    marginBottom: 15,
   },
-  modalContent:{
-    backgroundColor:"#1A1833",
-    borderRadius:15,
-    padding:20,
-    width:"80%",
-    maxWidth:300,
+  gridMovieItem: {
+    width: "32%",
+    aspectRatio: 2 / 3,
   },
-  modalTitle:{
-    fontSize:20,
-    fontWeight:"600",
-    color:"#F2A8A8",
-    marginBottom:20,
-    textAlign:"center",
+  gridMoviePoster: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 8,
   },
-  filterOption:{
-    paddingVertical:15,
-    paddingHorizontal:20,
-    borderRadius:10,
-    marginBottom:10,
-    backgroundColor:"rgba(242,168,168,0.1)",
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  filterOptionText:{
-    fontSize:16,
-    color:"#FFFFFF",
-    textAlign:"center",
+  modalContent: {
+    backgroundColor: "#1A1833",
+    borderRadius: 15,
+    padding: 20,
+    width: "80%",
+    maxWidth: 300,
   },
-  clearFilterOption:{
-    paddingVertical:15,
-    paddingHorizontal:20,
-    borderRadius:10,
-    marginTop:10,
-    backgroundColor:"rgba(176,176,176,0.2)",
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#F2A8A8",
+    marginBottom: 20,
+    textAlign: "center",
   },
-  clearFilterText:{
-    fontSize:16,
-    color:"#B0B0B0",
-    textAlign:"center",
+  filterOption: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 10,
+    backgroundColor: "rgba(242,168,168,0.1)",
+  },
+  filterOptionText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    textAlign: "center",
+  },
+  clearFilterOption: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginTop: 10,
+    backgroundColor: "rgba(176,176,176,0.2)",
+  },
+  clearFilterText: {
+    fontSize: 16,
+    color: "#B0B0B0",
+    textAlign: "center",
   },
 });
