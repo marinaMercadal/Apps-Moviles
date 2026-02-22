@@ -17,10 +17,10 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../hooks/useFavorites";
+import { API_URL } from "../config";
 
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 const PLACEHOLDER = "https://via.placeholder.com/120x180?text=Sin+Imagen";
-const API_URL = "http://172.29.135.101:3000";
 
 export default function BuscarScreen() {
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function BuscarScreen() {
 
   const fetchPopularMovies = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/movies/popular`);
+      const res = await fetch(`${API_URL}/movies/popular`);
 
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -62,7 +62,7 @@ export default function BuscarScreen() {
 
     setLoading(true);
     try {
-      const url = `${API_URL}/api/search?query=${encodeURIComponent(text)}&page=1`;
+      const url = `${API_URL}/search?query=${encodeURIComponent(text)}&page=1`;
 
       const res = await fetch(url);
 

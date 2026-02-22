@@ -13,9 +13,7 @@ import {
 } from 'react-native';
 import { Images } from '../../assets/images';
 import { useAuth } from '../../context/AuthContext';
-
-const API_URL = 'http://172.29.135.101:3000';
-const API_ORIGIN = 'http://172.29.135.101:3000';
+import { API_ORIGIN, API_URL } from '../../config';
 
 interface Movie{
   id:string;
@@ -55,17 +53,11 @@ const ProfileScreen=()=>{
       
       const token = await getToken();
       
-      const favoritesRes = await fetch(`${API_URL}/api/favorites`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      const reviewsRes = await fetch(`${API_URL}/api/reviews/my-reviews`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const [favoritesRes, reviewsRes, listsRes] = await Promise.all([
+        fetch(`${API_URL}/favorites`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_URL}/reviews/my-reviews`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_URL}/lists`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      ]);
       
       let favorites: Movie[] = [];
       if (favoritesRes.ok) {
@@ -87,7 +79,7 @@ const ProfileScreen=()=>{
         const movieDetailsPromises = reviews.map(async (review: any) => {
           try {
             const tmdbRes = await fetch(
-              `${API_URL}/api/movies/${review.movieId}`
+              `${API_URL}/movies/${review.movieId}`
             );
             if (tmdbRes.ok) {
               const movieData = await tmdbRes.json();
@@ -109,10 +101,16 @@ const ProfileScreen=()=>{
         reviewedMovies = moviesData.filter((movie) => movie !== null) as Movie[];
       }
 
+      let listsCount = 0;
+      if (listsRes.ok) {
+        const listsData = await listsRes.json();
+        listsCount = Array.isArray(listsData) ? listsData.length : 0;
+      }
+
       const stats = {
         totalMovies: favorites.length,
         moviesThisYear: 0,
-        lists: 0,
+        lists: listsCount,
         reviews: reviews.length
       };
 
