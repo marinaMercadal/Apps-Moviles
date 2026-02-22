@@ -49,6 +49,7 @@ export default function ListDetailScreen(){
   const [addMovieModalVisible,setAddMovieModalVisible]=useState(false);
   const [searchQuery,setSearchQuery]=useState('');
   const [searchResults,setSearchResults]=useState<SearchMovie[]>([]);
+  const [popularMovies,setPopularMovies]=useState<SearchMovie[]>([]);
   const [searching,setSearching]=useState(false);
   const searchTimeout=useRef<ReturnType<typeof setTimeout>|null>(null);
 
@@ -76,6 +77,18 @@ export default function ListDetailScreen(){
       console.error('Error fetching list:',error);
     }finally{
       setLoading(false);
+    }
+  };
+
+  const fetchPopularMovies=async()=>{
+    try{
+      const res=await fetch(`${API_URL}/movies/popular`);
+      if(res.ok){
+        const data=await res.json();
+        setPopularMovies((data.results||[]).slice(0,20));
+      }
+    }catch(error){
+      console.error('Error fetching popular movies:',error);
     }
   };
 
@@ -165,6 +178,7 @@ export default function ListDetailScreen(){
     setSearchQuery('');
     setSearchResults([]);
     setAddMovieModalVisible(true);
+    if(popularMovies.length===0) fetchPopularMovies();
   };
 
   if(loading){
@@ -265,15 +279,18 @@ export default function ListDetailScreen(){
               onChangeText={searchMovies}
               autoFocus
             />
+            <Text style={styles.sectionLabel}>
+              {searchQuery.trim()?'Resultados':'Películas populares'}
+            </Text>
             {searching?(
               <ActivityIndicator size="small" color="#F2A8A8" style={{marginVertical:20}}/>
             ):(
               <FlatList
-                data={searchResults}
+                data={searchQuery.trim()?searchResults:popularMovies}
                 keyExtractor={item=>String(item.id)}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                  searchQuery.trim().length>0?(
+                  searchQuery.trim()?(
                     <Text style={styles.noResults}>No se encontraron resultados</Text>
                   ):null
                 }
@@ -351,6 +368,7 @@ const styles=StyleSheet.create({
     backgroundColor:'#2A273F',borderRadius:10,
     padding:12,color:'#fff',fontSize:15,marginBottom:12,
   },
+  sectionLabel:{color:'#aaa',fontSize:12,marginBottom:8},
   noResults:{color:'#aaa',textAlign:'center',marginTop:20,fontSize:14},
   resultRow:{
     flexDirection:'row',alignItems:'center',
