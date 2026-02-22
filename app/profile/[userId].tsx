@@ -1,6 +1,6 @@
-import {Ionicons} from '@expo/vector-icons';
-import {useLocalSearchParams,useRouter} from 'expo-router';
-import {useEffect,useState} from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import {Images} from '../../assets/images';
-import {API_ORIGIN,API_URL} from '../../config';
+import { Images } from '../../assets/images';
+import { API_ORIGIN, API_URL } from '../../config';
 
 interface Movie{
   id:string;
@@ -29,11 +29,22 @@ interface PublicUser{
   _count:{reviews:number;favorites:number};
 }
 
+interface Review{
+  id:number;
+  rating:number;
+  comment:string;
+  createdAt:string;
+  movieId:string;
+  movie?:{title:string;poster_path:string};
+}
+
 export default function PublicProfileScreen(){
   const {userId}=useLocalSearchParams<{userId:string}>();
   const router=useRouter();
   const [userData,setUserData]=useState<PublicUser|null>(null);
+  const [favoriteMovies,setFavoriteMovies]=useState<Movie[]>([]);
   const [reviewedMovies,setReviewedMovies]=useState<Movie[]>([]);
+  const [recentReviews,setRecentReviews]=useState<Review[]>([]);
   const [loading,setLoading]=useState(true);
   const [notFound,setNotFound]=useState(false);
 
@@ -44,8 +55,9 @@ export default function PublicProfileScreen(){
   const fetchUserData=async()=>{
     try{
       setLoading(true);
-      const [userRes,reviewsRes]=await Promise.all([
+      const [userRes,favoritesRes,reviewsRes]=await Promise.all([
         fetch(`${API_URL}/users/${userId}`),
+        fetch(`${API_URL}/favorites?userId=${userId}`),
         fetch(`${API_URL}/reviews?userId=${userId}`),
       ]);
 
@@ -56,6 +68,17 @@ export default function PublicProfileScreen(){
 
       const user:PublicUser=await userRes.json();
       setUserData(user);
+
+      if(favoritesRes.ok){
+        const favsData=await favoritesRes.json();
+        const favorites=(Array.isArray(favsData)?favsData:[]).map((fav:any)=>({
+          id:fav.movieId,
+          title:fav.title,
+          poster_path:fav.posterPath,
+          rating:fav.rating,
+        }));
+        setFavoriteMovies(favorites);
+      }
 
       if(reviewsRes.ok){
         const reviewData=await reviewsRes.json();
@@ -81,6 +104,7 @@ export default function PublicProfileScreen(){
 
         const movies=await Promise.all(movieDetailsPromises);
         setReviewedMovies(movies.filter((m)=>m!==null) as Movie[]);
+        setRecentReviews(reviews.slice(0,3));
       }
     }catch(error){
       console.error('Error fetching user profile:',error);
@@ -166,6 +190,32 @@ export default function PublicProfileScreen(){
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Películas favoritas de {userData.name||userData.username}</Text>
+          {favoriteMovies.length===0?(
+            <Text style={styles.emptyText}>Sin películas favoritas</Text>
+          ):(
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.movieScrollContainer}
+            >
+              {favoriteMovies.map((movie)=>(
+                <TouchableOpacity
+                  key={movie.id}
+                  style={styles.movieScrollItem}
+                  onPress={()=>router.push(`/movie/${movie.id}`)}
+                >
+                  <Image
+                    source={{uri:`https://image.tmdb.org/t/p/w500${movie.poster_path}`}}
+                    style={styles.movieScrollPoster}
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>
             Películas reseñadas por {userData.name||userData.username}
           </Text>
@@ -197,6 +247,8 @@ export default function PublicProfileScreen(){
             </ScrollView>
           )}
         </View>
+
+        
       </ScrollView>
     </SafeAreaView>
   );
@@ -316,5 +368,27 @@ const styles=StyleSheet.create({
   },
   stars:{
     flexDirection:'row',
+  },
+  reviewCard:{
+    backgroundColor:'#2A273F',
+    borderRadius:10,
+    padding:12,
+    marginBottom:12,
+  },
+  reviewMovie:{
+    color:'#fff',
+    fontWeight:'bold',
+    fontSize:14,
+    marginBottom:6,
+  },
+  reviewMeta:{
+    flexDirection:'row',
+    alignItems:'center',
+    marginBottom:6,
+  },
+  reviewComment:{
+    color:'#aaa',
+    fontSize:13,
+    lineHeight:18,
   },
 });

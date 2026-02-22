@@ -1,10 +1,11 @@
-import {Ionicons} from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useRouter} from 'expo-router';
-import {useEffect,useState} from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
+  Animated,
+  Easing,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -14,8 +15,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {useAuth} from '../../context/AuthContext';
-import {API_URL} from '../../config';
+import { API_URL } from '../../config';
+import { useAuth } from '../../context/AuthContext';
 
 interface List{
   id:number;
@@ -32,10 +33,19 @@ export default function ListsScreen(){
   const [modalVisible,setModalVisible]=useState(false);
   const [newListName,setNewListName]=useState('');
   const [creating,setCreating]=useState(false);
+  const [deleteConfirmVisible,setDeleteConfirmVisible]=useState(false);
+  const [listToDelete,setListToDelete]=useState<{id:number,name:string}|null>(null);
+  const [deleting,setDeleting]=useState(false);
+  const deleteModalScaleAnim=useRef(new Animated.Value(0)).current;
+  const deleteModalOpacityAnim=useRef(new Animated.Value(0)).current;
 
-  useEffect(()=>{
-    if(user) fetchLists();
-  },[user]);
+  useFocusEffect(
+    useCallback(()=>{
+      if(user){
+        fetchLists();
+      }
+    },[user])
+  );
 
   const getToken=async()=>{
     try{return await AsyncStorage.getItem('token');}
@@ -83,22 +93,65 @@ export default function ListsScreen(){
     }
   };
 
-  const deleteList=async(listId:number)=>{
-    Alert.alert('Eliminar lista','¿Seguro que querés eliminar esta lista?',[
-      {text:'Cancelar',style:'cancel'},
-      {text:'Eliminar',style:'destructive',onPress:async()=>{
-        try{
-          const token=await getToken();
-          await fetch(`${API_URL}/lists/${listId}`,{
-            method:'DELETE',
-            headers:{Authorization:`Bearer ${token}`},
-          });
-          setLists(prev=>prev.filter(l=>l.id!==listId));
-        }catch(error){
-          console.error('Error deleting list:',error);
-        }
-      }},
-    ]);
+  const findListName=(listId:number)=>{
+    return lists.find(l=>l.id===listId)?.name||'lista';
+  };
+
+  const showDeleteConfirm=(listId:number)=>{
+    const listName=findListName(listId);
+    setListToDelete({id:listId,name:listName});
+    setDeleteConfirmVisible(true);
+    Animated.parallel([
+      Animated.timing(deleteModalScaleAnim,{
+        toValue:1,
+        duration:300,
+        easing:Easing.out(Easing.back(1.5)),
+        useNativeDriver:true,
+      }),
+      Animated.timing(deleteModalOpacityAnim,{
+        toValue:1,
+        duration:300,
+        useNativeDriver:true,
+      }),
+    ]).start();
+  };
+
+  const confirmDeleteList=async()=>{
+    if(!listToDelete) return;
+    try{
+      setDeleting(true);
+      const token=await getToken();
+      const res=await fetch(`${API_URL}/lists/${listToDelete.id}`,{
+        method:'DELETE',
+        headers:{Authorization:`Bearer ${token}`},
+      });
+      if(res.ok){
+        setLists(prev=>prev.filter(l=>l.id!==listToDelete.id));
+        closeDeleteConfirm();
+      }
+    }catch(error){
+      console.error('Error deleting list:',error);
+    }finally{
+      setDeleting(false);
+    }
+  };
+
+  const closeDeleteConfirm=()=>{
+    Animated.parallel([
+      Animated.timing(deleteModalScaleAnim,{
+        toValue:0,
+        duration:200,
+        useNativeDriver:true,
+      }),
+      Animated.timing(deleteModalOpacityAnim,{
+        toValue:0,
+        duration:200,
+        useNativeDriver:true,
+      }),
+    ]).start(()=>{
+      setDeleteConfirmVisible(false);
+      setListToDelete(null);
+    });
   };
 
   if(!user){
@@ -145,7 +198,7 @@ export default function ListsScreen(){
               key={list.id}
               style={styles.listCard}
               onPress={()=>router.push(`/lists/${list.id}`)}
-              onLongPress={()=>deleteList(list.id)}
+              onLongPress={()=>showDeleteConfirm(list.id)}
             >
               <View style={styles.listIconContainer}>
                 <Ionicons name="film-outline" size={28} color="#F2A8A8"/>
@@ -201,15 +254,59 @@ export default function ListsScreen(){
           </View>
         </View>
       </Modal>
+
+      <Modal
+        transparent
+        visible={deleteConfirmVisible}
+        animationType="fade"
+        onRequestClose={closeDeleteConfirm}
+      >
+        <View style={styles.deleteModalOverlay}>
+          <Animated.View
+            style={[
+              styles.deleteModalContent,
+              {
+                transform:[{scale:deleteModalScaleAnim}],
+                opacity:deleteModalOpacityAnim,
+              },
+            ]}
+          >
+            <View style={styles.deleteIconContainer}>
+              <Ionicons name="trash-outline" size={40} color="#FF6B6B"/>
+            </View>
+            <Text style={styles.deleteModalTitle}>Eliminar Lista</Text>
+            <Text style={styles.deleteModalSubtitle}>
+              ¿Seguro que queres eliminar "{listToDelete?.name}"?
+            </Text>
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={styles.deleteCancelButton}
+                onPress={closeDeleteConfirm}
+                disabled={deleting}
+              >
+                <Text style={styles.deleteCancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteConfirmButton}
+                onPress={confirmDeleteList}
+                disabled={deleting}
+              >
+                {deleting?(
+                  <ActivityIndicator size="small" color="#fff"/>
+                ):(
+                  <Text style={styles.deleteConfirmButtonText}>Eliminar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles=StyleSheet.create({
-  container:{
-    flex:1,
-    backgroundColor:'#1B1935',
-  },
+  container:{ flex:1, backgroundColor:'#1B1935' },
   header:{
     flexDirection:'row',
     alignItems:'center',
@@ -219,17 +316,9 @@ const styles=StyleSheet.create({
     borderBottomWidth:1,
     borderBottomColor:'#2A273F',
   },
-  backButton:{
-    padding:4,
-  },
-  headerTitle:{
-    fontSize:22,
-    fontWeight:'bold',
-    color:'#F2A8A8',
-  },
-  addButton:{
-    padding:4,
-  },
+  backButton:{ padding:4 },
+  headerTitle:{ fontSize:22, fontWeight:'bold', color:'#F2A8A8' },
+  addButton:{ padding:4 },
   centered:{
     flex:1,
     justifyContent:'center',
@@ -261,10 +350,7 @@ const styles=StyleSheet.create({
     fontWeight:'bold',
     fontSize:15,
   },
-  listContainer:{
-    padding:16,
-    paddingBottom:40,
-  },
+  listContainer:{ padding:16, paddingBottom:40 },
   listCard:{
     flexDirection:'row',
     alignItems:'center',
@@ -282,19 +368,9 @@ const styles=StyleSheet.create({
     alignItems:'center',
     marginRight:14,
   },
-  listInfo:{
-    flex:1,
-  },
-  listName:{
-    fontSize:17,
-    fontWeight:'600',
-    color:'#fff',
-    marginBottom:3,
-  },
-  listCount:{
-    fontSize:13,
-    color:'#aaa',
-  },
+  listInfo:{ flex:1 },
+  listName:{ fontSize:17, fontWeight:'600', color:'#fff', marginBottom:3 },
+  listCount:{ fontSize:13, color:'#aaa' },
   modalOverlay:{
     flex:1,
     backgroundColor:'rgba(0,0,0,0.6)',
@@ -323,10 +399,7 @@ const styles=StyleSheet.create({
     fontSize:16,
     marginBottom:20,
   },
-  modalButtons:{
-    flexDirection:'row',
-    gap:12,
-  },
+  modalButtons:{ flexDirection:'row', gap:12 },
   cancelButton:{
     flex:1,
     paddingVertical:12,
@@ -334,11 +407,7 @@ const styles=StyleSheet.create({
     backgroundColor:'rgba(176,176,176,0.15)',
     alignItems:'center',
   },
-  cancelButtonText:{
-    color:'#aaa',
-    fontWeight:'600',
-    fontSize:15,
-  },
+  cancelButtonText:{ color:'#aaa', fontWeight:'600', fontSize:15 },
   createButton:{
     flex:1,
     paddingVertical:12,
@@ -346,12 +415,60 @@ const styles=StyleSheet.create({
     backgroundColor:'#F2A8A8',
     alignItems:'center',
   },
-  createButtonDisabled:{
-    opacity:0.4,
+  createButtonDisabled:{ opacity:0.4 },
+  createButtonText:{ color:'#1B1935', fontWeight:'bold', fontSize:15 },
+  deleteModalOverlay:{
+    flex:1,
+    backgroundColor:'rgba(0,0,0,0.7)',
+    justifyContent:'center',
+    alignItems:'center',
   },
-  createButtonText:{
-    color:'#1B1935',
+  deleteModalContent:{
+    backgroundColor:'#1A1833',
+    borderRadius:16,
+    padding:24,
+    width:'85%',
+    maxWidth:340,
+    alignItems:'center',
+  },
+  deleteIconContainer:{
+    width:60,
+    height:60,
+    borderRadius:30,
+    backgroundColor:'rgba(255,107,107,0.15)',
+    justifyContent:'center',
+    alignItems:'center',
+    marginBottom:16,
+  },
+  deleteModalTitle:{
+    fontSize:20,
     fontWeight:'bold',
-    fontSize:15,
+    color:'#FF6B6B',
+    marginBottom:8,
+    textAlign:'center',
   },
+  deleteModalSubtitle:{
+    fontSize:14,
+    color:'#aaa',
+    textAlign:'center',
+    marginBottom:24,
+    lineHeight:20,
+  },
+  deleteModalButtons:{ flexDirection:'row', gap:12, width:'100%' },
+  deleteCancelButton:{
+    flex:1,
+    paddingVertical:12,
+    borderRadius:10,
+    backgroundColor:'rgba(176,176,176,0.15)',
+    alignItems:'center',
+  },
+  deleteCancelButtonText:{ color:'#aaa', fontWeight:'600', fontSize:15 },
+  deleteConfirmButton:{
+    flex:1,
+    paddingVertical:12,
+    borderRadius:10,
+    backgroundColor:'#FF6B6B',
+    alignItems:'center',
+  },
+  deleteConfirmButtonText:{ color:'#fff', fontWeight:'bold', fontSize:15 },
 });

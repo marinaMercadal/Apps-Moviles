@@ -2,11 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   Easing,
   ImageBackground,
   Keyboard,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,47 +20,105 @@ import { useAuth } from "../../context/AuthContext";
 
 type Mode = "login" | "register";
 
+// ✅ Modal animado igual que en MovieDetails
+function AnimatedModal({
+  visible, scaleAnim, opacityAnim, onClose, type = "success", children,
+}: {
+  visible: boolean; scaleAnim: Animated.Value; opacityAnim: Animated.Value;
+  onClose: () => void; type?: "success" | "error"; children: React.ReactNode;
+}) {
+  const borderColor = type === "success" ? "#F2A8A8" : "#FF6B6B";
+  return (
+    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <Animated.View style={[styles.borderContainer, { opacity: opacityAnim, transform: [{ scale: scaleAnim }] }]}>
+          <View style={[styles.modalBorder, styles.borderTop, { width: "100%", backgroundColor: borderColor }]} />
+          <View style={[styles.modalBorder, styles.borderRight, { height: "100%", backgroundColor: borderColor }]} />
+          <View style={[styles.modalBorder, styles.borderBottom, { width: "100%", backgroundColor: borderColor }]} />
+          <View style={[styles.modalBorder, styles.borderLeft, { height: "100%", backgroundColor: borderColor }]} />
+          <View style={styles.modalContent}>{children}</View>
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function LoginScreen() {
   const translateY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
-  const { login, register } = useAuth(); 
+  const { login, register } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState(""); 
+  const [username, setUsername] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");   
+  const [confirm, setConfirm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // ✅ Estado del modal de error
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const errorScaleAnim = useRef(new Animated.Value(0)).current;
+  const errorOpacityAnim = useRef(new Animated.Value(0)).current;
+
+  // ✅ Función para mostrar el modal de error
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setErrorModalVisible(true);
+  };
+
+  // ✅ Animación del modal de error
+  useEffect(() => {
+    if (errorModalVisible) {
+      Animated.parallel([
+        Animated.timing(errorScaleAnim, { toValue: 1, duration: 400, easing: Easing.out(Easing.back(1.5)), useNativeDriver: true }),
+        Animated.timing(errorOpacityAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(errorScaleAnim, { toValue: 0, duration: 300, easing: Easing.in(Easing.back(1.5)), useNativeDriver: true }),
+        Animated.timing(errorOpacityAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [errorModalVisible]);
 
   const handleSubmit = async () => {
     if (mode === "login") {
-      if (!email || !password) return Alert.alert("Error", "Por favor ingresa email y contraseña");
+      if (!email || !password) {
+        showError("Por favor ingresa email y contraseña");
+        return;
+      }
       setIsLoading(true);
       try {
         await login(email, password);
         router.replace("/(tabs)");
       } catch (error: any) {
-        Alert.alert("Error", error.message || "Error al iniciar sesión");
+        showError(error.message || "Error al iniciar sesión");
       } finally {
         setIsLoading(false);
       }
     } else {
       if (!email || !username || !password) {
-        return Alert.alert("Error", "Email, usuario y contraseña son obligatorios.");
+        showError("Email, usuario y contraseña son obligatorios.");
+        return;
       }
       if (password.length < 6) {
-        return Alert.alert("Error", "La contraseña debe tener al menos 6 caracteres.");
+        showError("La contraseña debe tener al menos 6 caracteres.");
+        return;
       }
       if (password !== confirm) {
-        return Alert.alert("Error", "Las contraseñas no coinciden.");
+        showError("Las contraseñas no coinciden.");
+        return;
       }
       setIsLoading(true);
       try {
         await register(email, password, username, name);
         router.replace("/(tabs)");
       } catch (error: any) {
-        Alert.alert("Error", error.message || "Error al registrarse");
+        showError(error.message || "Error al registrarse");
       } finally {
         setIsLoading(false);
       }
@@ -69,25 +127,12 @@ export default function LoginScreen() {
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", () => {
-      Animated.timing(translateY, {
-        toValue: -200,
-        duration: 250,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.ease),
-      }).start();
+      Animated.timing(translateY, { toValue: -200, duration: 250, useNativeDriver: true, easing: Easing.out(Easing.ease) }).start();
     });
     const hideSub = Keyboard.addListener("keyboardDidHide", () => {
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.ease),
-      }).start();
+      Animated.timing(translateY, { toValue: 0, duration: 250, useNativeDriver: true, easing: Easing.out(Easing.ease) }).start();
     });
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
+    return () => { showSub.remove(); hideSub.remove(); };
   }, [translateY]);
 
   return (
@@ -128,13 +173,8 @@ export default function LoginScreen() {
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={20} color="#8c8c8c" style={styles.icon} />
             <TextInput
-              placeholder="Email"
-              placeholderTextColor="#8c8c8c"
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
+              placeholder="Email" placeholderTextColor="#8c8c8c" style={styles.input}
+              value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address"
             />
           </View>
 
@@ -143,22 +183,15 @@ export default function LoginScreen() {
               <View style={styles.inputContainer}>
                 <Ionicons name="at-outline" size={20} color="#8c8c8c" style={styles.icon} />
                 <TextInput
-                  placeholder="Usuario"
-                  placeholderTextColor="#8c8c8c"
-                  style={styles.input}
-                  value={username}
-                  onChangeText={setUsername}
-                  autoCapitalize="none"
+                  placeholder="Usuario" placeholderTextColor="#8c8c8c" style={styles.input}
+                  value={username} onChangeText={setUsername} autoCapitalize="none"
                 />
               </View>
               <View style={styles.inputContainer}>
                 <Ionicons name="person-outline" size={20} color="#8c8c8c" style={styles.icon} />
                 <TextInput
-                  placeholder="Nombre (opcional)"
-                  placeholderTextColor="#8c8c8c"
-                  style={styles.input}
-                  value={name}
-                  onChangeText={setName}
+                  placeholder="Nombre (opcional)" placeholderTextColor="#8c8c8c"
+                  style={styles.input} value={name} onChangeText={setName}
                 />
               </View>
             </>
@@ -167,55 +200,66 @@ export default function LoginScreen() {
           <View style={styles.inputContainer}>
             <Ionicons name="lock-closed-outline" size={20} color="#8c8c8c" style={styles.icon} />
             <TextInput
-              placeholder="Contraseña"
-              placeholderTextColor="#8c8c8c"
-              secureTextEntry
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
+              placeholder="Contraseña" placeholderTextColor="#8c8c8c"
+              secureTextEntry={!showPassword} style={styles.input}
+              value={password} onChangeText={setPassword}
             />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#8c8c8c" />
+            </TouchableOpacity>
           </View>
 
           {mode === "register" && (
             <View style={styles.inputContainer}>
               <Ionicons name="lock-closed" size={20} color="#8c8c8c" style={styles.icon} />
               <TextInput
-                placeholder="Confirmar contraseña"
-                placeholderTextColor="#8c8c8c"
-                secureTextEntry
-                style={styles.input}
-                value={confirm}
-                onChangeText={setConfirm}
+                placeholder="Confirmar contraseña" placeholderTextColor="#8c8c8c"
+                secureTextEntry={!showConfirm} style={styles.input}
+                value={confirm} onChangeText={setConfirm}
               />
+              <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+                <Ionicons name={showConfirm ? "eye-off-outline" : "eye-outline"} size={20} color="#8c8c8c" />
+              </TouchableOpacity>
             </View>
           )}
-
-          {mode === "login" && <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>}
 
           <TouchableOpacity style={styles.loginButton} onPress={handleSubmit} disabled={isLoading}>
             <Text style={styles.loginText}>
               {isLoading ? (mode === "login" ? "Iniciando..." : "Creando...") : mode === "login" ? "Login" : "Registrarme"}
             </Text>
-            
           </TouchableOpacity>
 
           {mode === "login" ? (
             <Text style={styles.register}>
               ¿No tienes cuenta?{" "}
-              <Text style={{ color: "#F2A8A8" }} onPress={() => setMode("register")}>
-                Registrate acá.
-              </Text>
+              <Text style={{ color: "#F2A8A8" }} onPress={() => setMode("register")}>Registrate acá.</Text>
             </Text>
           ) : (
             <Text style={styles.register}>
               ¿Ya tienes cuenta?{" "}
-              <Text style={{ color: "#F2A8A8" }} onPress={() => setMode("login")}>
-                Iniciá sesión acá.
-              </Text>
+              <Text style={{ color: "#F2A8A8" }} onPress={() => setMode("login")}>Iniciá sesión acá.</Text>
             </Text>
           )}
         </Animated.View>
       </View>
+
+      {/* ✅ Modal de error animado */}
+      <AnimatedModal
+        visible={errorModalVisible}
+        scaleAnim={errorScaleAnim}
+        opacityAnim={errorOpacityAnim}
+        onClose={() => setErrorModalVisible(false)}
+        type="error"
+      >
+        <View style={styles.modalIconContainer}>
+          <Ionicons name="alert-circle" size={70} color="#FF6B6B" />
+        </View>
+        <Text style={styles.modalTitle}>Error</Text>
+        <Text style={styles.modalMessage}>{errorMessage}</Text>
+        <TouchableOpacity style={styles.modalButton} onPress={() => setErrorModalVisible(false)}>
+          <Text style={styles.modalButtonText}>Entendido</Text>
+        </TouchableOpacity>
+      </AnimatedModal>
     </ScrollView>
   );
 }
@@ -225,35 +269,17 @@ const styles = StyleSheet.create({
   headerImage: { width: "100%", height: 250 },
   overlay: { flex: 1, backgroundColor: "rgba(27,25,53,0.6)" },
   loginBox: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 25,
-    marginTop: 20,
-    marginBottom: 10,
-    width: "90%",
-    alignSelf: "center",
-    backgroundColor: "rgba(43, 40, 69, 0.6)",
-    borderRadius: 20,
-    paddingVertical: 15,
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 25,
+    marginTop: 20, marginBottom: 10, width: "90%", alignSelf: "center",
+    backgroundColor: "rgba(43, 40, 69, 0.6)", borderRadius: 20, paddingVertical: 15,
+    shadowColor: "#000", shadowOpacity: 0.25, shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8, elevation: 5, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
   },
   toggleRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
   toggleBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.2)",
   },
   toggleActive: { backgroundColor: "#F2A8A8", borderColor: "#F2A8A8" },
   toggleText: { color: "#ccc", fontWeight: "600" },
@@ -261,23 +287,35 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: "bold", color: "#fff", marginBottom: 5 },
   subtitle: { fontSize: 14, color: "#aaa", marginBottom: 25 },
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#2d2a45",
-    borderRadius: 25,
-    paddingHorizontal: 15,
-    marginTop: 15,
-    width: "100%",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+    flexDirection: "row", alignItems: "center", backgroundColor: "#2d2a45",
+    borderRadius: 25, paddingHorizontal: 15, marginTop: 15, width: "100%",
+    shadowColor: "#000", shadowOpacity: 0.2, shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4, elevation: 3,
   },
   icon: { marginRight: 10 },
   input: { flex: 1, color: "#fff", paddingVertical: 12 },
-  forgot: { alignSelf: "flex-end", marginTop: 8, marginRight: 10, color: "#8c8c8c", fontSize: 12 },
   loginButton: { marginTop: 25, backgroundColor: "#F2A8A8", paddingVertical: 12, paddingHorizontal: 80, borderRadius: 25 },
   loginText: { color: "#1B1935", fontSize: 16, fontWeight: "bold", textAlign: "center" },
   register: { marginTop: 20, color: "#8c8c8c", fontSize: 12, textAlign: "center" },
+
+  // ✅ Estilos del modal
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "center", alignItems: "center" },
+  borderContainer: { position: "relative", width: 320, alignItems: "center" },
+  modalContent: {
+    backgroundColor: "#1A1833", borderRadius: 20, padding: 32,
+    width: 320, alignItems: "center", marginTop: 3,
+  },
+  modalBorder: { borderRadius: 2, zIndex: 10 },
+  borderTop: { position: "absolute", top: 0, left: 0, height: 3 },
+  borderRight: { position: "absolute", right: 0, top: 0, width: 3 },
+  borderBottom: { position: "absolute", bottom: 0, left: 0, height: 3 },
+  borderLeft: { position: "absolute", left: 0, bottom: 0, width: 3 },
+  modalIconContainer: { marginBottom: 16 },
+  modalTitle: { fontSize: 22, fontWeight: "bold", color: "#FF6B6B", marginBottom: 8, textAlign: "center" },
+  modalMessage: { fontSize: 14, color: "#AAA", textAlign: "center", marginBottom: 24, fontStyle: "italic", lineHeight: 20 },
+  modalButton: {
+    backgroundColor: "#FF6B6B", paddingVertical: 12, paddingHorizontal: 40,
+    borderRadius: 25, alignItems: "center",
+  },
+  modalButtonText: { color: "#FFF", fontWeight: "bold", fontSize: 15 },
 });

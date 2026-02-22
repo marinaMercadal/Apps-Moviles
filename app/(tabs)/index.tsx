@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Animated, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Images } from "../../assets/images";
 import { API_ORIGIN, API_URL } from "../../config";
@@ -32,16 +32,11 @@ export default function HomeScreen() {
   const [recentReviews, setRecentReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchPopularMovies();
-    fetchRecentReviews();
-  }, []);
+  const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchRecentReviews = async () => {
     try {
       const res = await fetch(`${API_URL}/reviews/recent`);
-      
       if (res.ok) {
         const data = await res.json();
         setRecentReviews(data.reviews || []);
@@ -55,16 +50,10 @@ export default function HomeScreen() {
     try {
       setLoading(true);
       setError(null);
-
       const res = await fetch(`${API_URL}/movies/popular`);
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const text = await res.text();
       const data = JSON.parse(text);
-
       if (data.results && Array.isArray(data.results)) {
         setPopularMovies(data.results);
       } else {
@@ -79,6 +68,30 @@ export default function HomeScreen() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchPopularMovies();
+    fetchRecentReviews();
+  }, []);
+
+  // Cuando la pantalla está en foco: arranca el polling
+  // Cuando pierde el foco (usuario navega a otra tab): limpia el intervalo
+  useFocusEffect(
+    useCallback(() => {
+      fetchRecentReviews();
+
+      pollingInterval.current = setInterval(() => {
+        fetchRecentReviews();
+      }, 15000); // refresca cada 15 segundos
+
+      return () => {
+        if (pollingInterval.current) {
+          clearInterval(pollingInterval.current);
+          pollingInterval.current = null;
+        }
+      };
+    }, [])
+  );
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -148,7 +161,7 @@ function ReviewCard({ review }: ReviewCardProps) {
   const avatarUri = review.user?.profileImage?.url
     ? `${API_ORIGIN}${review.user.profileImage.url}`
     : review.user?.avatarUrl || null;
-  
+
   const posterUri = review.movie?.poster_path
     ? `${IMG_URL}${review.movie.poster_path}`
     : null;
@@ -209,11 +222,7 @@ function MovieCard({ poster, id, title }: MovieCardProps) {
   };
 
   return (
-    <Pressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      onPress={handlePress}
-    >
+    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={handlePress}>
       <Animated.Image
         source={poster}
         style={[styles.moviePoster, { transform: [{ scale }] }]}

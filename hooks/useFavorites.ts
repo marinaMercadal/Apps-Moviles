@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
 import { API_URL } from "../config";
+import { useAuth } from "../context/AuthContext";
 
 export interface FavMovie {
   id: string;
@@ -24,10 +24,9 @@ export function useFavorites() {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem("token");
-      const response = await fetch(`${API_URL}/favorites`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await fetch(`${API_URL}/favorites?userId=${user.id}`, {
+  // sin Authorization header
+        
       });
 
       if (response.ok) {
