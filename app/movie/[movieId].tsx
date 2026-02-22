@@ -340,6 +340,18 @@ export default function MovieDetails() {
 
       <View style={styles.divider} />
 
+      {user && (
+        <TouchableOpacity
+          style={styles.addToListButton}
+          onPress={() => { fetchUserLists(); setListsModalVisible(true); }}
+        >
+          <Ionicons name="list-outline" size={18} color="#1B1935" />
+          <Text style={styles.addToListButtonText}>Agregar a lista</Text>
+        </TouchableOpacity>
+      )}
+
+      <View style={styles.divider} />
+
       <Text style={styles.sectionTitle}>Elenco</Text>
       <View style={styles.castCircleRow}>
         {cast
@@ -385,16 +397,6 @@ export default function MovieDetails() {
           </TouchableOpacity>
         )}
       />
-
-      {user && (
-        <TouchableOpacity
-          style={styles.addToListButton}
-          onPress={() => { fetchUserLists(); setListsModalVisible(true); }}
-        >
-          <Ionicons name="list-outline" size={18} color="#1B1935" />
-          <Text style={styles.addToListButtonText}>Agregar a lista</Text>
-        </TouchableOpacity>
-      )}
 
       <Modal
         transparent
