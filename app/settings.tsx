@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
+  Animated,
+  Easing,
   Image,
   Modal,
   ScrollView,
@@ -11,13 +12,40 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useAuth } from "../context/AuthContext";
 import { API_ORIGIN, API_URL } from "../config";
+import { useAuth } from "../context/AuthContext";
 
 type AvatarItem = { id: number; url: string; label?: string };
 
+function AnimatedModal({
+  visible,
+  progress,
+  scaleAnim,
+  opacityAnim,
+  onClose,
+  children,
+}: {
+  visible: boolean;
+  progress: number;
+  scaleAnim: Animated.Value;
+  opacityAnim: Animated.Value;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <Animated.View style={[styles.animatedModal, { opacity: opacityAnim, transform: [{ scale: scaleAnim }] }]}>
+          <View style={styles.modalBorder} />
+          <View style={styles.modalContent}>{children}</View>
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function SettingsScreen() {
-  const { user, token, logout, refreshUser, setUser } = useAuth();
+  const { user, token, setUser } = useAuth();
 
   const [name, setName] = useState(user?.name || "");
   const [savingName, setSavingName] = useState(false);
@@ -27,10 +55,12 @@ export default function SettingsScreen() {
   const [selectedAvatarId, setSelectedAvatarId] = useState<number | null>(null);
   const [savingAvatar, setSavingAvatar] = useState(false);
 
-  const [movieId, setMovieId] = useState<string>("");
-  const [rating, setRating] = useState<string>("5");
-  const [comment, setComment] = useState<string>("");
-  const [creating, setCreating] = useState(false);
+  // ✅ Animación modal de éxito
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalProgress, setModalProgress] = useState(0);
+  const modalScaleAnim = useRef(new Animated.Value(0)).current;
+  const modalOpacityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     setName(user?.name || "");
@@ -57,15 +87,48 @@ export default function SettingsScreen() {
 
   const currentAvatarUri = full(user.profileImage?.url);
 
+  const showSuccessModal = (message: string) => {
+    setModalMessage(message);
+    setModalProgress(0);
+    setModalVisible(true);
+
+    const progressInterval = setInterval(() => {
+      setModalProgress((prev) => {
+        if (prev >= 85) {
+          clearInterval(progressInterval);
+          return prev;
+        }
+        return prev + Math.random() * 12;
+      });
+    }, 200);
+
+    setTimeout(() => {
+      clearInterval(progressInterval);
+      setModalProgress(100);
+      setTimeout(() => setModalVisible(false), 800);
+    }, 1000);
+  };
+
+  useEffect(() => {
+    if (modalVisible) {
+      Animated.parallel([
+        Animated.timing(modalScaleAnim, { toValue: 1, duration: 400, easing: Easing.out(Easing.back(1.5)), useNativeDriver: true }),
+        Animated.timing(modalOpacityAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(modalScaleAnim, { toValue: 0, duration: 300, easing: Easing.in(Easing.back(1.5)), useNativeDriver: true }),
+        Animated.timing(modalOpacityAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [modalVisible]);
+
   const saveName = async () => {
     try {
       setSavingName(true);
       const res = await fetch(`${API_URL}/auth/me`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name }),
       });
       const j = await res.json();
@@ -73,9 +136,9 @@ export default function SettingsScreen() {
 
       await AsyncStorage.setItem("user", JSON.stringify(j.user));
       setUser(j.user);
-      Alert.alert("Listo", "Nombre actualizado");
+      showSuccessModal("Nombre actualizado ✅");
     } catch (e: any) {
-      Alert.alert("Error", e.message || "No se pudo actualizar el nombre");
+      showSuccessModal("Error al actualizar el nombre ❌");
     } finally {
       setSavingName(false);
     }
@@ -89,17 +152,14 @@ export default function SettingsScreen() {
 
   const saveAvatar = async () => {
     if (!selectedAvatarId) {
-      Alert.alert("Elegí un avatar", "Tocá una imagen para seleccionarla.");
+      showSuccessModal("Elegí un avatar ❌");
       return;
     }
     try {
       setSavingAvatar(true);
       const res = await fetch(`${API_URL}/auth/me`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ profileImageId: selectedAvatarId }),
       });
       const j = await res.json();
@@ -107,41 +167,12 @@ export default function SettingsScreen() {
 
       await AsyncStorage.setItem("user", JSON.stringify(j.user));
       setUser(j.user);
-
       setAvatarPickerOpen(false);
-      Alert.alert("Listo", "Avatar actualizado");
+      showSuccessModal("Avatar actualizado ✅");
     } catch (e: any) {
-      Alert.alert("Error", e.message || "No se pudo actualizar el avatar");
+      showSuccessModal("Error al actualizar el avatar ❌");
     } finally {
       setSavingAvatar(false);
-    }
-  };
-
-  const createReview = async () => {
-    try {
-      setCreating(true);
-      const res = await fetch(`${API_URL}/reviews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          movieId: Number(movieId),
-          rating: Number(rating),
-          comment,
-        }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.message || "No se pudo guardar la reseña");
-      Alert.alert("Listo", "Reseña guardada");
-      setMovieId("");
-      setRating("5");
-      setComment("");
-    } catch (e: any) {
-      Alert.alert("Error", e.message || "No se pudo guardar la reseña");
-    } finally {
-      setCreating(false);
     }
   };
 
@@ -153,11 +184,7 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Perfil</Text>
         <View style={styles.row}>
           <Image
-            source={
-              currentAvatarUri
-                ? { uri: currentAvatarUri }
-                : require("../assets/images/profile-placeholder.png")
-            }
+            source={currentAvatarUri ? { uri: currentAvatarUri } : require("../assets/images/profile-placeholder.png")}
             style={styles.avatar}
           />
           <TouchableOpacity style={styles.btn} onPress={openAvatarPicker}>
@@ -165,24 +192,13 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
         <Text style={styles.label}>Nombre</Text>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder="Tu nombre"
-          placeholderTextColor="#999"
-          style={styles.input}
-        />
+        <TextInput value={name} onChangeText={setName} placeholder="Tu nombre" placeholderTextColor="#999" style={styles.input} />
         <TouchableOpacity style={styles.btn} onPress={saveName} disabled={savingName}>
           <Text style={styles.btnText}>{savingName ? "Guardando..." : "Guardar nombre"}</Text>
         </TouchableOpacity>
       </View>
 
-      <Modal
-        visible={avatarPickerOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setAvatarPickerOpen(false)}
-      >
+      <Modal visible={avatarPickerOpen} animationType="slide" transparent onRequestClose={() => setAvatarPickerOpen(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBody}>
             <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>Elegí tu avatar</Text>
@@ -190,45 +206,31 @@ export default function SettingsScreen() {
               {avatars.map((a) => {
                 const isSelected = selectedAvatarId === a.id;
                 return (
-                  <TouchableOpacity
-                    key={a.id}
-                    onPress={() => setSelectedAvatarId(a.id)}
-                    style={styles.gridItem}
-                  >
+                  <TouchableOpacity key={a.id} onPress={() => setSelectedAvatarId(a.id)} style={styles.gridItem}>
                     <Image
                       source={{ uri: full(a.url)! }}
-                      style={[
-                        styles.gridAvatar,
-                        { borderColor: isSelected ? "#F2A8A8" : "#444", borderWidth: isSelected ? 3 : 1 },
-                      ]}
+                      style={[styles.gridAvatar, { borderColor: isSelected ? "#F2A8A8" : "#444", borderWidth: isSelected ? 3 : 1 }]}
                     />
-                    {!!a.label && (
-                      <Text style={styles.gridLabel} numberOfLines={1}>
-                        {a.label}
-                      </Text>
-                    )}
+                    {!!a.label && <Text style={styles.gridLabel} numberOfLines={1}>{a.label}</Text>}
                   </TouchableOpacity>
                 );
               })}
             </ScrollView>
             <View style={{ flexDirection: "row", gap: 10, marginTop: 6 }}>
-              <TouchableOpacity
-                style={[styles.btn, { flex: 1, backgroundColor: "#3b3355" }]}
-                onPress={() => setAvatarPickerOpen(false)}
-              >
+              <TouchableOpacity style={[styles.btn, { flex: 1, backgroundColor: "#3b3355" }]} onPress={() => setAvatarPickerOpen(false)}>
                 <Text style={styles.btnText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.btn, { flex: 1 }]}
-                onPress={saveAvatar}
-                disabled={savingAvatar}
-              >
+              <TouchableOpacity style={[styles.btn, { flex: 1 }]} onPress={saveAvatar} disabled={savingAvatar}>
                 <Text style={styles.btnText}>{savingAvatar ? "Guardando..." : "Guardar"}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+
+      <AnimatedModal visible={modalVisible} progress={modalProgress} scaleAnim={modalScaleAnim} opacityAnim={modalOpacityAnim} onClose={() => setModalVisible(false)}>
+        <Text style={{ color: "#F2A8A8", fontSize: 18, fontWeight: "bold", textAlign: "center" }}>{modalMessage}</Text>
+      </AnimatedModal>
     </ScrollView>
   );
 }
@@ -251,4 +253,7 @@ const styles = StyleSheet.create({
   gridItem: { width: "30%", alignItems: "center" },
   gridAvatar: { width: 80, height: 80, borderRadius: 40 },
   gridLabel: { color: "#ccc", fontSize: 12, marginTop: 4, textAlign: "center", maxWidth: 80 },
+  animatedModal: { backgroundColor: "#1B1935", borderRadius: 12, padding: 16, alignItems: "center" },
+  modalBorder: { height: 3, width: "100%", backgroundColor: "#F2A8A8", marginBottom: 12 },
+  modalContent: { paddingHorizontal: 8, paddingVertical: 12 },
 });

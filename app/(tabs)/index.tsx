@@ -74,15 +74,14 @@ export default function HomeScreen() {
     fetchRecentReviews();
   }, []);
 
-  // Cuando la pantalla está en foco: arranca el polling
-  // Cuando pierde el foco (usuario navega a otra tab): limpia el intervalo
+
   useFocusEffect(
     useCallback(() => {
       fetchRecentReviews();
 
       pollingInterval.current = setInterval(() => {
         fetchRecentReviews();
-      }, 15000); // refresca cada 15 segundos
+      }, 15000);
 
       return () => {
         if (pollingInterval.current) {

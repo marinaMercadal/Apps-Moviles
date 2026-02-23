@@ -118,7 +118,6 @@ export default function MovieDetails() {
   const deleteModalOpacityAnim = useRef(new Animated.Value(0)).current;
   const scrollTranslateY = useRef(new Animated.Value(0)).current;
 
-  // ✅ Estado para modal "ya está en lista"
   const [alreadyInListVisible, setAlreadyInListVisible] = useState(false);
   const alreadyInListScaleAnim = useRef(new Animated.Value(0)).current;
   const alreadyInListOpacityAnim = useRef(new Animated.Value(0)).current;
@@ -184,7 +183,6 @@ export default function MovieDetails() {
     }
   }, [addToListSuccessVisible]);
 
-  // ✅ useEffect para el modal "ya está en lista"
   useEffect(() => {
     if (alreadyInListVisible) {
       Animated.parallel([
@@ -375,7 +373,6 @@ export default function MovieDetails() {
         }, 0);
       } else {
         const data = await res.json();
-        // ✅ Si ya está en la lista mostramos modal, sino Alert normal
         if (data.message?.toLowerCase().includes("ya está") || res.status === 409) {
           setListsModalVisible(false);
           setAlreadyInListVisible(true);

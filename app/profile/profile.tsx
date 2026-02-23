@@ -43,7 +43,6 @@ const ProfileScreen = () => {
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Obtener token
   const getToken = async () => {
     try {
       return await AsyncStorage.getItem('token');
@@ -53,7 +52,6 @@ const ProfileScreen = () => {
     }
   };
 
-  // 🔄 Función para cargar todas las reseñas y películas reseñadas
   const fetchReviewedMovies = useCallback(async () => {
     if (!user) return;
 
@@ -249,7 +247,6 @@ const avatarUri = user?.profileImage?.url
   );
 };
 
-// 🔹 Mantengo tus estilos originales
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a1a2e' },
   scrollView: { flex: 1 },
